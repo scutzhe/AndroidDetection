@@ -1,0 +1,2 @@
+# AndroidDetection
+jni
