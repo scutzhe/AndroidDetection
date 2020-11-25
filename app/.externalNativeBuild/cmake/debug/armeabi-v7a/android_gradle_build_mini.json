@@ -1,0 +1,18 @@
+{
+  "buildFiles": [
+    "/home/zhex/Downloads/Android-FaceDetection-UltraNet-MNN/app/../../../Android/android-ndk-r21/build/cmake/platforms.cmake",
+    "/home/zhex/Downloads/Android-FaceDetection-UltraNet-MNN/app/CMakeLists.txt",
+    "/home/zhex/Downloads/Android-FaceDetection-UltraNet-MNN/app/../../../Android/android-ndk-r21/build/cmake/android.toolchain.cmake"
+  ],
+  "cleanCommands": [
+    "/home/zhex/Android/Sdk/cmake/3.10.2.4988404/bin/cmake --build /home/zhex/Downloads/Android-FaceDetection-UltraNet-MNN/app/.externalNativeBuild/cmake/debug/armeabi-v7a --target clean"
+  ],
+  "libraries": {
+    "facedetect-Debug-armeabi-v7a": {
+      "artifactName": "facedetect",
+      "buildCommand": "/home/zhex/Android/Sdk/cmake/3.10.2.4988404/bin/cmake --build /home/zhex/Downloads/Android-FaceDetection-UltraNet-MNN/app/.externalNativeBuild/cmake/debug/armeabi-v7a --target facedetect",
+      "abi": "armeabi-v7a",
+      "output": "/home/zhex/Downloads/Android-FaceDetection-UltraNet-MNN/app/build/intermediates/cmake/debug/obj/armeabi-v7a/libfacedetect.so"
+    }
+  }
+}

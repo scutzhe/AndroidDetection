@@ -1,0 +1,24 @@
+Executable : /home/zhex/Android/Sdk/cmake/3.10.2.4988404/bin/cmake
+arguments : 
+-H/home/zhex/Downloads/Android-FaceDetection-UltraNet-MNN/app
+-B/home/zhex/Downloads/Android-FaceDetection-UltraNet-MNN/app/.externalNativeBuild/cmake/release/arm64-v8a
+-DANDROID_ABI=arm64-v8a
+-DANDROID_PLATFORM=android-16
+-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/home/zhex/Downloads/Android-FaceDetection-UltraNet-MNN/app/build/intermediates/cmake/release/obj/arm64-v8a
+-DCMAKE_BUILD_TYPE=Release
+-DANDROID_NDK=/home/zhex/Android/android-ndk-r21
+-DCMAKE_SYSTEM_NAME=Android
+-DCMAKE_ANDROID_ARCH_ABI=arm64-v8a
+-DCMAKE_SYSTEM_VERSION=16
+-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+-DCMAKE_ANDROID_NDK=/home/zhex/Android/android-ndk-r21
+-DCMAKE_TOOLCHAIN_FILE=/home/zhex/Android/android-ndk-r21/build/cmake/android.toolchain.cmake
+-G Ninja
+-DCMAKE_MAKE_PROGRAM=/home/zhex/Android/Sdk/cmake/3.10.2.4988404/bin/ninja
+-DANDROID_STL=c++_shared
+-DANDROID_ARM_NEON=TRUE
+-DANDROID_PLATFORM=android-21
+-DMNN_OPENCL=true
+-DMNN_OPENGL=true
+jvmArgs : 
+
