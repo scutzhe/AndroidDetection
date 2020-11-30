@@ -10,7 +10,7 @@
 
 using namespace std;
 
-static Face *ultra;
+static Face *face_detection;
 bool detection_sdk_init_ok = false;
 
 extern "C" {
@@ -38,27 +38,18 @@ Java_com_facesdk_FaceSDKNative_FaceDetectionModelInit(JNIEnv *env, jobject insta
 
     string tFaceModelDir = faceDetectionModelPath;
     string tLastChar = tFaceModelDir.substr(tFaceModelDir.length()-1, 1);
-    //RFB-320
-    //RFB-320-quant-ADMM-32
-    //RFB-320-quant-KL-5792
-    //slim-320
-    //slim-320-quant-ADMM-50 
-    //量化模型需要使用CPU方式 net.cpp中修改 sch_config.type = (MNNForwardType)MNN_FORWARD_CPU
-    // change names
-//    string str = tFaceModelDir + "RFB-320-quant-ADMM-32.mnn";
-    string str = tFaceModelDir + "slim-320-quant-ADMM-50.mnn";
-
-    ultra = new  Face(str, 320, 240, 4, 0.65 ); // config model input
-
+    string model_path = tFaceModelDir + "face.tflite";
+    const char* const_model_path = model_path.c_str();
+    string label_path = tFaceModelDir + "label_map_face.txt";
+    face_detection = new Face(const_model_path,label_path); // config model input
     env->ReleaseStringUTFChars(faceDetectionModelPath_, faceDetectionModelPath);
     detection_sdk_init_ok = true;
     tRet = true;
-
     return tRet;
 }
 
 JNIEXPORT jintArray JNICALL
-Java_com_facesdk_FaceSDKNative_FaceDetect(JNIEnv *env, jobject instance, jbyteArray imageDate_,
+Java_com_facesdk_FaceSDKNative_FaceDetection(JNIEnv *env, jobject instance, jbyteArray imageDate_,
                                           jint imageWidth, jint imageHeight, jint imageChannel) {
     if(!detection_sdk_init_ok){
         LOGD("sdk not init");
@@ -70,47 +61,40 @@ Java_com_facesdk_FaceSDKNative_FaceDetect(JNIEnv *env, jobject instance, jbyteAr
         LOGD("imgW=%d, imgH=%d,imgC=%d",imageWidth,imageHeight,imageChannel);
     }
     else{
-        LOGD("img data format error");
+        LOGD("image data format error");
         return NULL;
     }
 
     jbyte *imageDate = env->GetByteArrayElements(imageDate_, NULL);
     if (NULL == imageDate){
-        LOGD("img data is null");
+        LOGD("image data is null");
         return NULL;
     }
 
-    if(imageWidth<200||imageHeight<200){
-        LOGD("img is too small");
+    if(imageWidth<160||imageHeight<120){
+        LOGD("image is too small");
         return NULL;
     }
-
 
     std::vector<FaceInfo> face_info;
-    //detect face
-    ultra ->detect((unsigned char*)imageDate, imageWidth, imageHeight, imageChannel, face_info );
+    //get result
+    face_detection ->detection((unsigned char*)imageDate, imageWidth, imageHeight, imageChannel,face_info);
+    int32_t detection_num = static_cast<int32_t>(face_info.size());
+    int out_size = 1+detection_num*4;
+    int *faceInfo = new int[out_size];
+    faceInfo[0] = detection_num;
 
-    int32_t num_face = static_cast<int32_t>(face_info.size());
-
-    int out_size = 1+num_face*4;
-    int *allfaceInfo = new int[out_size];
-    allfaceInfo[0] = num_face;
-    for (int i=0; i<num_face; i++) {
-
-        allfaceInfo[4*i+1] = face_info[i].x1;//left
-        allfaceInfo[4*i+2] = face_info[i].y1;//top
-        allfaceInfo[4*i+3] = face_info[i].x2;//right
-        allfaceInfo[4*i+4] = face_info[i].y2;//bottom
-
+    for (int i=0; i<detection_num; i++) {
+        faceInfo[4*i+1] = int(face_info[i].x_min);
+        faceInfo[4*i+2] = int(face_info[i].y_min);
+        faceInfo[4*i+3] = int(face_info[i].x_max);
+        faceInfo[4*i+4] = int(face_info[i].y_max);
     }
-
     jintArray tFaceInfo = env->NewIntArray(out_size);
-    env->SetIntArrayRegion(tFaceInfo, 0, out_size, allfaceInfo);
+    env->SetIntArrayRegion(tFaceInfo, 0, out_size, faceInfo);
     env->ReleaseByteArrayElements(imageDate_, imageDate, 0);
 
-
-    delete [] allfaceInfo;
-
+    delete [] faceInfo;
     return tFaceInfo;
 }
 
@@ -120,11 +104,11 @@ Java_com_facesdk_FaceSDKNative_FaceDetectionModelUnInit(JNIEnv *env, jobject ins
     jboolean tDetectionUnInit = false;
 
     if (!detection_sdk_init_ok) {
-        LOGD("sdk not inited, do nothing");
+        LOGD("sdk not init, do nothing");
         return true;
     }
 
-    delete ultra;
+    delete face_detection;
 
     detection_sdk_init_ok = false;
 

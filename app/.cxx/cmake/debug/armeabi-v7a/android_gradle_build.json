@@ -1,7 +1,7 @@
 {
   "stringTable": {
     "0": "/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/debug/armeabi-v7a",
-    "1": "--target=armv7-none-linux-androideabi21 --gcc-toolchain=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/sysroot -DMNN_USE_LOGCAT -Dfacedetect_EXPORTS -I../../../../src/main/cpp/include -I../../../../src/main/cpp -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security -std=c++11 -O0 -fno-limit-debug-info -fPIC"
+    "1": "--target=armv7-none-linux-androideabi21 --gcc-toolchain=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/sysroot -DMNN_USE_LOGCAT -Dface_detection_EXPORTS -I../../../../src/main/cpp/include -I../../../../src/main/cpp -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security -std=c++11 -O0 -fno-limit-debug-info -fPIC"
   },
   "buildFiles": [
     "/home/zhex/git_me/AndroidDetection/app/CMakeLists.txt",
@@ -13,12 +13,12 @@
   ],
   "buildTargetsCommand": "/home/zhex/Android/Sdk/cmake/3.10.2.4988404/bin/ninja  -C \"/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/debug/armeabi-v7a\" {LIST_OF_TARGETS_TO_BUILD}",
   "libraries": {
-    "facedetect-Debug-armeabi-v7a": {
-      "buildCommand": "/home/zhex/Android/Sdk/cmake/3.10.2.4988404/bin/ninja -C \"/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/debug/armeabi-v7a\" facedetect",
+    "face_detection-Debug-armeabi-v7a": {
+      "buildCommand": "/home/zhex/Android/Sdk/cmake/3.10.2.4988404/bin/ninja -C \"/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/debug/armeabi-v7a\" face_detection",
       "buildType": "debug",
       "toolchain": "1562192006",
       "abi": "armeabi-v7a",
-      "artifactName": "facedetect",
+      "artifactName": "face_detection",
       "files": [
         {
           "src": "/home/zhex/git_me/AndroidDetection/app/src/main/cpp/jni.cpp",
@@ -29,18 +29,13 @@
           "src": "/home/zhex/git_me/AndroidDetection/app/src/main/cpp/Face.cpp",
           "flagsOrdinal": 1,
           "workingDirectoryOrdinal": 0
-        },
-        {
-          "src": "/home/zhex/git_me/AndroidDetection/app/src/main/cpp/net.cpp",
-          "flagsOrdinal": 1,
-          "workingDirectoryOrdinal": 0
         }
       ],
       "headers": [],
-      "output": "/home/zhex/git_me/AndroidDetection/app/build/intermediates/cmake/debug/obj/armeabi-v7a/libfacedetect.so",
+      "output": "/home/zhex/git_me/AndroidDetection/app/build/intermediates/cmake/debug/obj/armeabi-v7a/libface_detection.so",
       "runtimeFiles": [
-        "/home/zhex/git_me/AndroidDetection/app/src/main/jniLibs/armeabi-v7a/libMNN.so",
-        "/home/zhex/git_me/AndroidDetection/app/src/main/jniLibs/armeabi-v7a/libMNN_CL.so"
+        "/home/zhex/git_me/AndroidDetection/app/src/main/jniLibs/armeabi-v7a/libopencv_java3.so",
+        "/home/zhex/git_me/AndroidDetection/app/src/main/jniLibs/armeabi-v7a/libtensorflowLite.so"
       ]
     }
   },

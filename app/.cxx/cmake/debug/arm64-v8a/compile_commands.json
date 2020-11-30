@@ -1,19 +1,13 @@
 [
 {
   "directory": "/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/debug/arm64-v8a",
-  "command": "/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ --target=aarch64-none-linux-android21 --gcc-toolchain=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/sysroot  -DMNN_USE_LOGCAT -Dfacedetect_EXPORTS -I../../../../src/main/cpp/include -I../../../../src/main/cpp  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -std=c++11 -O0 -fno-limit-debug-info  -fPIC   -o CMakeFiles/facedetect.dir/src/main/cpp/jni.cpp.o -c /home/zhex/git_me/AndroidDetection/app/src/main/cpp/jni.cpp",
+  "command": "/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ --target=aarch64-none-linux-android21 --gcc-toolchain=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/sysroot  -DMNN_USE_LOGCAT -Dface_detection_EXPORTS -I../../../../src/main/cpp/include -I../../../../src/main/cpp  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -std=c++11 -O0 -fno-limit-debug-info  -fPIC   -o CMakeFiles/face_detection.dir/src/main/cpp/jni.cpp.o -c /home/zhex/git_me/AndroidDetection/app/src/main/cpp/jni.cpp",
   "file": "/home/zhex/git_me/AndroidDetection/app/src/main/cpp/jni.cpp"
 },
 
 {
   "directory": "/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/debug/arm64-v8a",
-  "command": "/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ --target=aarch64-none-linux-android21 --gcc-toolchain=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/sysroot  -DMNN_USE_LOGCAT -Dfacedetect_EXPORTS -I../../../../src/main/cpp/include -I../../../../src/main/cpp  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -std=c++11 -O0 -fno-limit-debug-info  -fPIC   -o CMakeFiles/facedetect.dir/src/main/cpp/Face.cpp.o -c /home/zhex/git_me/AndroidDetection/app/src/main/cpp/Face.cpp",
+  "command": "/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ --target=aarch64-none-linux-android21 --gcc-toolchain=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/sysroot  -DMNN_USE_LOGCAT -Dface_detection_EXPORTS -I../../../../src/main/cpp/include -I../../../../src/main/cpp  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -std=c++11 -O0 -fno-limit-debug-info  -fPIC   -o CMakeFiles/face_detection.dir/src/main/cpp/Face.cpp.o -c /home/zhex/git_me/AndroidDetection/app/src/main/cpp/Face.cpp",
   "file": "/home/zhex/git_me/AndroidDetection/app/src/main/cpp/Face.cpp"
-},
-
-{
-  "directory": "/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/debug/arm64-v8a",
-  "command": "/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ --target=aarch64-none-linux-android21 --gcc-toolchain=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/sysroot  -DMNN_USE_LOGCAT -Dfacedetect_EXPORTS -I../../../../src/main/cpp/include -I../../../../src/main/cpp  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -std=c++11 -O0 -fno-limit-debug-info  -fPIC   -o CMakeFiles/facedetect.dir/src/main/cpp/net.cpp.o -c /home/zhex/git_me/AndroidDetection/app/src/main/cpp/net.cpp",
-  "file": "/home/zhex/git_me/AndroidDetection/app/src/main/cpp/net.cpp"
 }
 ]

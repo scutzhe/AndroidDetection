@@ -1,180 +1,134 @@
-#define clip(x, y) (x < 0 ? 0 : (x > y ? y : x))
+# include "Face.hpp"
 
-#include "Face.hpp"
-#define TAG "cpp"
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
-using namespace std;
-
-Face::Face(std::string &mnn_path,
-           int input_width, int input_length, int num_thread_,
-           float score_threshold_, float iou_threshold_) {
-    num_thread = num_thread_;
-    score_threshold = score_threshold_;
-    iou_threshold = iou_threshold_;
-    in_w = input_width;
-    in_h = input_length;
-    w_h_list = {in_w, in_h};
-
-    for (auto size : w_h_list) {
-        std::vector<float> fm_item;
-        for (float stride : strides) {
-            fm_item.push_back(ceil(size / stride));
-        }
-        featuremap_size.push_back(fm_item);
-    }
-
-    for (auto size : w_h_list) {
-        shrinkage_size.push_back(strides);
-    }
-    /* generate prior anchors */
-    for (int index = 0; index < num_featuremap; index++) {
-        float scale_w = in_w / shrinkage_size[0][index];
-        float scale_h = in_h / shrinkage_size[1][index];
-        for (int j = 0; j < featuremap_size[1][index]; j++) {
-            for (int i = 0; i < featuremap_size[0][index]; i++) {
-                float x_center = (i + 0.5) / scale_w;
-                float y_center = (j + 0.5) / scale_h;
-
-                for (float k : min_boxes[index]) {
-                    float w = k / in_w;
-                    float h = k / in_h;
-                    priors.push_back({clip(x_center, 1), clip(y_center, 1), clip(w, 1), clip(h, 1)});
-                }
-            }
-        }
-    }
-    /* generate prior anchors finished */
-
-    num_anchors = priors.size();
-
-    ultra_net.load_param(mnn_path, num_thread);
-    ultra_net.set_params(0, 1, mean_vals, norm_vals);
-
-}
-
-int Face::detect(unsigned char *data, int width, int height, int channel, std::vector<FaceInfo> &face_list ) {
-
-
-    image_h = height;
-    image_w = width;
-
-    Inference_engine_tensor  out;
-
-    string scores = "scores";
-    out.add_name(scores);
-
-    string boxes = "boxes";
-    out.add_name(boxes);
-
-    ultra_net.infer_img(data, width, height, channel, in_w, in_h, out);
-
-    std::vector<FaceInfo> bbox_collection;
-    generateBBox(bbox_collection, out.score(0).get() , out.score(1).get());
-    //LOGD("bbox_collection == %d", bbox_collection.size());
-    nms(bbox_collection, face_list);
-    return 0;
-}
-
-void Face::generateBBox(std::vector<FaceInfo> &bbox_collection, float* scores, float* boxes) {
-    for (int i = 0; i < num_anchors; i++) {
-        if (scores[i * 2 + 1 ] > score_threshold) {
-
-            FaceInfo rects;
-            float x_center = boxes[i * 4] * center_variance * priors[i][2] + priors[i][0];
-            float y_center = boxes[i * 4 + 1] * center_variance * priors[i][3] + priors[i][1];
-            float w = exp(boxes[i * 4 + 2] * size_variance) * priors[i][2];
-            float h = exp(boxes[i * 4 + 3] * size_variance) * priors[i][3];
-
-            rects.x1 = clip(x_center - w / 2.0, 1) * image_w;
-            rects.y1 = clip(y_center - h / 2.0, 1) * image_h;
-            rects.x2 = clip(x_center + w / 2.0, 1) * image_w;
-            rects.y2 = clip(y_center + h / 2.0, 1) * image_h;
-            rects.score = clip(scores[i * 2 + 1 ], 1);
-
-            bbox_collection.push_back(rects);
-        }
+Face::Face(const char* model_path,std::string label_path){
+    model = tflite::FlatBufferModel::BuildFromFile(model_path);
+    std::ifstream input(label_path);
+    for( std::string line; getline( input, line ); )
+    {
+        labels.push_back( line);
     }
 }
 
-void Face::nms(std::vector<FaceInfo> &input, std::vector<FaceInfo> &output, int type) {
-    std::sort(input.begin(), input.end(), [](const FaceInfo &a, const FaceInfo &b) { return a.score > b.score; });
+float Face:: exp_composite(float x) {
+    return 1.f / (1.f + expf(-x));
+}
 
-    int box_num = input.size();
+cv::Mat Face:: transBufferToMat(unsigned char* pBuffer, int width, int height, int channel, int nBPB){
+    cv::Mat mDst;
+    if (channel == 3){
+        if (nBPB == 1){
+            mDst = cv::Mat::zeros(cv::Size(width, height), CV_8UC3);
+        }
+        else if (nBPB == 2){
+            mDst = cv::Mat::zeros(cv::Size(width, height), CV_16UC3);
+        }
+    }
+    else if (channel == 1){
+        if (nBPB == 1){
+            mDst = cv::Mat::zeros(cv::Size(width, height), CV_8UC1);
+        }
+        else if (nBPB == 2){
+            mDst = cv::Mat::zeros(cv::Size(width, height), CV_16UC1);
+        }
+    }
 
-    std::vector<int> merged(box_num, 0);
+    else if(channel == 4){
+        if (nBPB == 1){
+            mDst = cv::Mat::zeros(cv::Size(width, height), CV_8UC4);
+        }
+        else if (nBPB == 2){
+            mDst = cv::Mat::zeros(cv::Size(width, height), CV_16UC4);
+        }
+    }
 
-    for (int i = 0; i < box_num; i++) {
-        if (merged[i])
+    for (int j = 0; j < height; ++j){
+        unsigned char* data = mDst.ptr<unsigned char>(j);
+        unsigned char* pSubBuffer = pBuffer + (height - 1 - j) * width  * channel * nBPB;
+        memcpy(data, pSubBuffer, width * channel * nBPB);
+    }
+    if (channel == 3){
+        cv::cvtColor(mDst, mDst, CV_RGB2BGR);
+    }
+    else if (channel == 1){
+        cv::cvtColor(mDst, mDst, CV_GRAY2BGR);
+    }
+    else if (channel == 4){
+        cv::cvtColor(mDst, mDst, CV_RGBA2BGR);
+    }
+    return mDst;
+}
+
+void Face::detection(unsigned char *raw_image, int width, int height, int channel,std::vector<FaceInfo>&face_info) {
+    // Build the interpreter
+    tflite::ops::builtin::BuiltinOpResolver resolver;
+    std::unique_ptr<tflite::Interpreter> interpreter;
+    tflite::InterpreterBuilder(*model.get(), resolver)(&interpreter);
+
+    // Resize input tensors, if desired.
+    TfLiteTensor* output_locations = nullptr;
+    TfLiteTensor* output_classes = nullptr;
+    TfLiteTensor* output_scores = nullptr;
+    TfLiteTensor* num_detections = nullptr;
+
+    //input image
+    cv::Mat image_input;
+    cv::Mat image = transBufferToMat(raw_image,width,height,channel,1);
+    cv::resize(image,image_input,cv::Size(WIDTH,HEIGHT));
+    cv::cvtColor(image_input,image_input,CV_BGR2RGB);
+    interpreter->AllocateTensors();
+
+    //get input
+    auto *input_tensor = interpreter->typed_input_tensor<float>(0);
+    for(int i=0;i<image_input.cols * image_input.rows * CHANNELS;i++){
+        input_tensor[i] = image_input.data[i]/255.0;
+    }
+    interpreter->SetAllowFp16PrecisionForFp32(true);
+    interpreter->SetNumThreads(6);
+
+    // execute inference
+    interpreter->Invoke();
+
+    //get result
+    output_locations = interpreter->tensor(interpreter->outputs()[0]);
+    output_classes  = interpreter->tensor(interpreter->outputs()[1]);
+    output_scores = interpreter->tensor(interpreter->outputs()[2]);
+    num_detections   = interpreter->tensor(interpreter->outputs()[3]);
+
+    auto out_loc = output_locations->data.f;
+    auto out_cls = output_classes->data.f;
+    auto out_scores = output_scores->data.f;
+    auto out_num = num_detections->data.f;
+
+    std::vector<float> locations;
+    std::vector<float> cls;
+    std::vector<float> score;
+
+    for (int i = 0; i < 10; i++){
+        locations.push_back(out_loc[i]);
+        cls.push_back(out_cls[i]);
+        score.push_back(out_scores[i]);
+    }
+
+    int count=0;
+    for(std::size_t j = 0; j <locations.size(); j+=4){
+        float score = exp_composite(out_num[count]);
+        if (score < SCORE_THRESHOLD){
             continue;
-        std::vector<FaceInfo> buf;
-
-        buf.push_back(input[i]);
-        merged[i] = 1;
-
-        float h0 = input[i].y2 - input[i].y1 + 1;
-        float w0 = input[i].x2 - input[i].x1 + 1;
-
-        float area0 = h0 * w0;
-
-        for (int j = i + 1; j < box_num; j++) {
-            if (merged[j])
-                continue;
-
-            float inner_x0 = input[i].x1 > input[j].x1 ? input[i].x1 : input[j].x1;
-            float inner_y0 = input[i].y1 > input[j].y1 ? input[i].y1 : input[j].y1;
-
-            float inner_x1 = input[i].x2 < input[j].x2 ? input[i].x2 : input[j].x2;
-            float inner_y1 = input[i].y2 < input[j].y2 ? input[i].y2 : input[j].y2;
-
-            float inner_h = inner_y1 - inner_y0 + 1;
-            float inner_w = inner_x1 - inner_x0 + 1;
-
-            if (inner_h <= 0 || inner_w <= 0)
-                continue;
-
-            float inner_area = inner_h * inner_w;
-
-            float h1 = input[j].y2 - input[j].y1 + 1;
-            float w1 = input[j].x2 - input[j].x1 + 1;
-
-            float area1 = h1 * w1;
-
-            float score;
-
-            score = inner_area / (area0 + area1 - inner_area);
-
-            if (score > iou_threshold) {
-                merged[j] = 1;
-                buf.push_back(input[j]);
-            }
         }
-        switch (type) {
-            case hard_nms: {
-                output.push_back(buf[0]);
-                break;
-            }
-            case blending_nms: {
-                float total = 0;
-                for (int i = 0; i < buf.size(); i++) {
-                    total += exp(buf[i].score);
-                }
-                FaceInfo rects;
-                memset(&rects, 0, sizeof(rects));
-                for (int i = 0; i < buf.size(); i++) {
-                    float rate = exp(buf[i].score) / total;
-                    rects.x1 += buf[i].x1 * rate;
-                    rects.y1 += buf[i].y1 * rate;
-                    rects.x2 += buf[i].x2 * rate;
-                    rects.y2 += buf[i].y2 * rate;
-                    rects.score += buf[i].score * rate;
-                }
-                output.push_back(rects);
-                break;
-            }
-            default: {
-                printf("wrong type of nms.");
-                exit(-1);
-            }
+        float y_min=locations[j]* float(image.rows);
+        float x_min=locations[j+1]* float(image.cols);
+        float y_max=locations[j+2]* float(image.rows);
+        float x_max=locations[j+3]* float(image.cols);
+        if(y_min < 0 || x_min < 0 || y_max < 0 || x_max < 0){
+            continue;
         }
+        FaceInfo  box_score;
+        box_score.x_min = x_min;
+        box_score.y_min = y_min;
+        box_score.x_max = x_max;
+        box_score.y_max = y_max;
+        box_score.score = score;
+        face_info.push_back(box_score);
+        count+=1;
     }
 }

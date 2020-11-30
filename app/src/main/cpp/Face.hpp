@@ -1,69 +1,47 @@
 #ifndef Face_hpp
 #define Face_hpp
-
 #pragma once
 
-#include <algorithm>
+#include "tensorflow/lite/interpreter.h"
+#include "tensorflow/lite/kernels/register.h"
+#include "tensorflow/lite/string_util.h"
+#include "tensorflow/lite/model.h"
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/types_c.h>
+#include <android/log.h>
+
 #include <iostream>
-#include <string>
-#include <vector>
-#include <memory>
-#include "net.h"
+#include <cmath>
+#include <fstream>
 
-#define num_featuremap 4
-#define hard_nms 1
-#define blending_nms 2 /* mix nms was been proposaled in paper blaze face, aims to minimize the temporal jitter*/
-typedef struct FaceInfo {
-    float x1;
-    float y1;
-    float x2;
-    float y2;
+#define LOG_TAG "DETECTION"
+#define LOGInfo(...) __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
+
+
+using namespace std;
+using namespace tflite;
+
+typedef struct FaceInfo{
+    float x_min;
+    float y_min;
+    float x_max;
+    float y_max;
     float score;
-
-} FaceInfo;
+}FaceInfo;
 
 class Face {
 public:
-    Face(std::string &mnn_path, int input_width, int input_length, int num_thread_ = 4, float score_threshold_ = 0.7, float iou_threshold_ = 0.35);
-
-    //~Face();
-
-    int detect(unsigned char *raw_image, int width, int height, int channel, std::vector<FaceInfo> &face_list);
-
-    void generateBBox(std::vector<FaceInfo> &bbox_collection,  float* scores, float* boxes);
-
-    void nms(std::vector<FaceInfo> &input, std::vector<FaceInfo> &output, int type = blending_nms);
-
+    Face(const char* model_path,std::string label_path);
+    static float exp_composite(float x);
+    static cv::Mat transBufferToMat(unsigned char* pBuffer, int width, int height, int channel, int nBPB);
+    void detection(unsigned char *raw_image, int width, int height, int channel,std::vector<FaceInfo>&face_info);
 private:
-    Inference_engine ultra_net;
-
-    int num_thread;
-    int image_w;
-    int image_h;
-
-    int in_w;
-    int in_h;
-    int num_anchors;
-
-    float score_threshold;
-    float iou_threshold;
-
-    float mean_vals[3] = {127, 127, 127};
-    float norm_vals[3] = {1.0 / 128, 1.0 / 128, 1.0 / 128};
-
-    const float center_variance = 0.1;
-    const float size_variance = 0.2;
-    const std::vector<std::vector<float>> min_boxes = {
-            {10.0f,  16.0f,  24.0f},
-            {32.0f,  48.0f},
-            {64.0f,  96.0f},
-            {128.0f, 192.0f, 256.0f}};
-    const std::vector<float> strides = {8.0, 16.0, 32.0, 64.0};
-    std::vector<std::vector<float>> featuremap_size;
-    std::vector<std::vector<float>> shrinkage_size;
-    std::vector<int> w_h_list;
-
-    std::vector<std::vector<float>> priors = {};
+    std::unique_ptr<tflite::FlatBufferModel> model;
+    std::vector<std::string> labels;
+    int WIDTH = 320;
+    int HEIGHT = 240;
+    int CHANNELS = 3;
+    float SCORE_THRESHOLD= 0.8;
 };
-
 #endif /* Face_hpp */

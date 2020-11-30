@@ -9,14 +9,14 @@
   ],
   "buildTargetsCommand": "/home/zhex/Android/Sdk/cmake/3.10.2.4988404/bin/ninja  -C \"/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/debug/arm64-v8a\" {LIST_OF_TARGETS_TO_BUILD}",
   "libraries": {
-    "facedetect-Debug-arm64-v8a": {
-      "artifactName": "facedetect",
-      "buildCommand": "/home/zhex/Android/Sdk/cmake/3.10.2.4988404/bin/ninja -C \"/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/debug/arm64-v8a\" facedetect",
+    "face_detection-Debug-arm64-v8a": {
+      "artifactName": "face_detection",
+      "buildCommand": "/home/zhex/Android/Sdk/cmake/3.10.2.4988404/bin/ninja -C \"/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/debug/arm64-v8a\" face_detection",
       "abi": "arm64-v8a",
-      "output": "/home/zhex/git_me/AndroidDetection/app/build/intermediates/cmake/debug/obj/arm64-v8a/libfacedetect.so",
+      "output": "/home/zhex/git_me/AndroidDetection/app/build/intermediates/cmake/debug/obj/arm64-v8a/libface_detection.so",
       "runtimeFiles": [
-        "/home/zhex/git_me/AndroidDetection/app/src/main/jniLibs/arm64-v8a/libMNN.so",
-        "/home/zhex/git_me/AndroidDetection/app/src/main/jniLibs/arm64-v8a/libMNN_CL.so"
+        "/home/zhex/git_me/AndroidDetection/app/src/main/jniLibs/arm64-v8a/libopencv_java3.so",
+        "/home/zhex/git_me/AndroidDetection/app/src/main/jniLibs/arm64-v8a/libtensorflowLite.so"
       ]
     }
   }

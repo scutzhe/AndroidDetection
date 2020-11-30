@@ -19,12 +19,10 @@ android {
         }
     }
     packagingOptions {
-        pickFirst 'lib/arm64-v8a/libMNN.so'
-        pickFirst 'lib/arm64-v8a/libMNN_CL.so'
-        pickFirst 'lib/arm64-v8a/libMNN_Express.so'
-        pickFirst 'lib/armeabi-v7a/libMNN.so'
-        pickFirst 'lib/armeabi-v7a/libMNN_CL.so'
-        pickFirst 'lib/armeabi-v7a/libMNN_Express.so'
+        pickFirst 'lib/arm64-v8a/libopencv_java3.so'
+        pickFirst 'lib/arm64-v8a/libtensorflowLite.so'
+        pickFirst 'lib/armeabi-v7a/libopencv_java3.so'
+        pickFirst 'lib/armeabi-v7a/libtensorflowLite.so'
     }
     buildTypes {
         debug {

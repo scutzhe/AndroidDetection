@@ -10,6 +10,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.net.Uri;
+import android.nfc.Tag;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
@@ -76,12 +77,9 @@ public class MainActivity extends Activity {
 
         //copy model
         try {
-            //RFB-320-quant-ADMM-32
-            copyBigDataToSD("RFB-320.mnn");
-            copyBigDataToSD("RFB-320-quant-ADMM-32.mnn");
-            copyBigDataToSD("RFB-320-quant-KL-5792.mnn");
-            copyBigDataToSD("slim-320.mnn");
-            copyBigDataToSD("slim-320-quant-ADMM-50.mnn");
+            // copy
+            copyBigDataToSD("face.tflite");
+            copyBigDataToSD("label_map_face.txt");
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -117,11 +115,10 @@ public class MainActivity extends Activity {
 
                 long timeDetectFace = System.currentTimeMillis();
                 //do FaceDetect
-                int faceInfo[] =  faceSDKNative.FaceDetect(imageDate, width, height,4);
+                int faceInfo[] =  faceSDKNative.FaceDetection(imageDate, width, height,4);
                 timeDetectFace = System.currentTimeMillis() - timeDetectFace;
-
                 //Get Results
-               if (faceInfo.length>1) {
+                if (faceInfo.length>=1) {
                    int faceNum = faceInfo[0];
                    infoResult.setText("detect time："+timeDetectFace+"ms,   face number：" + faceNum);
                    Log.i(TAG, "detect time："+timeDetectFace);
