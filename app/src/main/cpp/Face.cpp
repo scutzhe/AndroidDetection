@@ -73,7 +73,8 @@ void Face::detection(unsigned char *raw_image, int width, int height, int channe
     //input image
     cv::Mat image_input;
     cv::Mat image = transBufferToMat(raw_image,width,height,channel,1);
-    cv::resize(image,image_input,cv::Size(WIDTH,HEIGHT));
+    LOGInfo("image.cols=%d,image.rows=%d",image.cols,image.rows);
+    cv::resize(image,image_input,cv::Size(WIDTH,HEIGHT),cv::INTER_CUBIC);
     cv::cvtColor(image_input,image_input,CV_BGR2RGB);
     interpreter->AllocateTensors();
 
@@ -82,6 +83,7 @@ void Face::detection(unsigned char *raw_image, int width, int height, int channe
     for(int i=0;i<image_input.cols * image_input.rows * CHANNELS;i++){
         input_tensor[i] = image_input.data[i]/255.0;
     }
+
     interpreter->SetAllowFp16PrecisionForFp32(true);
     interpreter->SetNumThreads(6);
 
@@ -115,7 +117,7 @@ void Face::detection(unsigned char *raw_image, int width, int height, int channe
         if (score < SCORE_THRESHOLD){
             continue;
         }
-        float y_min=locations[j]* float(image.rows);
+        float y_min=locations[j]  * float(image.rows);
         float x_min=locations[j+1]* float(image.cols);
         float y_max=locations[j+2]* float(image.rows);
         float x_max=locations[j+3]* float(image.cols);

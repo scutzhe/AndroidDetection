@@ -42,6 +42,6 @@ private:
     int WIDTH = 320;
     int HEIGHT = 240;
     int CHANNELS = 3;
-    float SCORE_THRESHOLD= 0.8;
+    float SCORE_THRESHOLD= 0.75f;
 };
 #endif /* Face_hpp */

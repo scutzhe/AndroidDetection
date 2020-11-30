@@ -10,7 +10,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.net.Uri;
-import android.nfc.Tag;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
@@ -70,10 +70,9 @@ public class MainActivity extends Activity {
 
         // For API 23+ you need to request the read/write permissions even if they are already in your manifest.
         int currentapiVersion = android.os.Build.VERSION.SDK_INT;
-
-        //if (currentapiVersion >= Build.VERSION_CODES.M) {
+        if (currentapiVersion >= Build.VERSION_CODES.M) {
             verifyPermissions(this);
-        //}
+        }
 
         //copy model
         try {
@@ -120,7 +119,7 @@ public class MainActivity extends Activity {
                 //Get Results
                 if (faceInfo.length>=1) {
                    int faceNum = faceInfo[0];
-                   infoResult.setText("detect time："+timeDetectFace+"ms,   face number：" + faceNum);
+                   infoResult.setText("detect time："+timeDetectFace+"ms, face number：" + faceNum);
                    Log.i(TAG, "detect time："+timeDetectFace);
                    Log.i(TAG, "face num：" + faceNum );
 
@@ -205,14 +204,31 @@ public class MainActivity extends Activity {
         return BitmapFactory.decodeStream(getContentResolver().openInputStream(selectedImage), null, o2);
     }
 
-    private byte[] getPixelsRGBA(Bitmap image) {
+    private byte[] getPixelsRGBA(Bitmap bitmap) {
         // calculate how many bytes our image consists of
-        int bytes = image.getByteCount();
+        int bytes = bitmap.getRowBytes() * bitmap.getHeight();
         ByteBuffer buffer = ByteBuffer.allocate(bytes); // Create a new buffer
-        image.copyPixelsToBuffer(buffer); // Move the byte data to the buffer
+        bitmap.copyPixelsToBuffer(buffer); // Move the byte data to the buffer
         byte[] temp = buffer.array(); // Get the underlying array containing the
 
         return temp;
+    }
+
+    private byte[] getPixelsRGB(Bitmap bitmap) {
+        int bytes = bitmap.getByteCount();
+        ByteBuffer buffer = ByteBuffer.allocate(bytes);
+        bitmap.copyPixelsToBuffer(buffer);
+        byte[] rgba = buffer.array();
+        byte[] pixels = new byte[(rgba.length / 4) * 3];
+        int count = rgba.length / 4;
+
+        //Bitmap像素点的色彩通道排列顺序是RGBA
+        for (int i = 0; i < count; i++) {
+            pixels[i * 3] = rgba[i * 4];        //R
+            pixels[i * 3 + 1] = rgba[i * 4 + 1];//G
+            pixels[i * 3 + 2] = rgba[i * 4 + 2];//B
+        }
+        return pixels;
     }
 
     private void copyBigDataToSD(String strOutFileName) throws IOException {
