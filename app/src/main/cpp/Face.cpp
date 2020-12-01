@@ -1,10 +1,9 @@
-#define clip(x, y) (x < 0 ? 0 : (x > y ? y : x))
-
 #include "Face.hpp"
 #define TAG "cpp"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
-using namespace std;
+#define clip(x, y) (x < 0 ? 0 : (x > y ? y : x))
 
+using namespace std;
 Face::Face(std::string &mnn_path,
            int input_width, int input_length, int num_thread_,
            float score_threshold_, float iou_threshold_) {
@@ -44,33 +43,23 @@ Face::Face(std::string &mnn_path,
         }
     }
     /* generate prior anchors finished */
-
     num_anchors = priors.size();
-
     ultra_net.load_param(mnn_path, num_thread);
     ultra_net.set_params(0, 1, mean_vals, norm_vals);
-
 }
 
 int Face::detect(unsigned char *data, int width, int height, int channel, std::vector<FaceInfo> &face_list ) {
-
-
     image_h = height;
     image_w = width;
-
     Inference_engine_tensor  out;
-
     string scores = "scores";
     out.add_name(scores);
-
     string boxes = "boxes";
     out.add_name(boxes);
-
+    LOGD("in_w=%d,in_h=%d",in_w,in_h);
     ultra_net.infer_img(data, width, height, channel, in_w, in_h, out);
-
     std::vector<FaceInfo> bbox_collection;
     generateBBox(bbox_collection, out.score(0).get() , out.score(1).get());
-    //LOGD("bbox_collection == %d", bbox_collection.size());
     nms(bbox_collection, face_list);
     return 0;
 }
@@ -78,7 +67,6 @@ int Face::detect(unsigned char *data, int width, int height, int channel, std::v
 void Face::generateBBox(std::vector<FaceInfo> &bbox_collection, float* scores, float* boxes) {
     for (int i = 0; i < num_anchors; i++) {
         if (scores[i * 2 + 1 ] > score_threshold) {
-
             FaceInfo rects;
             float x_center = boxes[i * 4] * center_variance * priors[i][2] + priors[i][0];
             float y_center = boxes[i * 4 + 1] * center_variance * priors[i][3] + priors[i][1];
@@ -98,11 +86,8 @@ void Face::generateBBox(std::vector<FaceInfo> &bbox_collection, float* scores, f
 
 void Face::nms(std::vector<FaceInfo> &input, std::vector<FaceInfo> &output, int type) {
     std::sort(input.begin(), input.end(), [](const FaceInfo &a, const FaceInfo &b) { return a.score > b.score; });
-
     int box_num = input.size();
-
     std::vector<int> merged(box_num, 0);
-
     for (int i = 0; i < box_num; i++) {
         if (merged[i])
             continue;
@@ -133,16 +118,11 @@ void Face::nms(std::vector<FaceInfo> &input, std::vector<FaceInfo> &output, int 
                 continue;
 
             float inner_area = inner_h * inner_w;
-
             float h1 = input[j].y2 - input[j].y1 + 1;
             float w1 = input[j].x2 - input[j].x1 + 1;
-
             float area1 = h1 * w1;
-
             float score;
-
             score = inner_area / (area0 + area1 - inner_area);
-
             if (score > iou_threshold) {
                 merged[j] = 1;
                 buf.push_back(input[j]);

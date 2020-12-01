@@ -38,15 +38,19 @@ Java_com_facesdk_FaceSDKNative_FaceDetectionModelInit(JNIEnv *env, jobject insta
 
     string tFaceModelDir = faceDetectionModelPath;
     string tLastChar = tFaceModelDir.substr(tFaceModelDir.length()-1, 1);
-    //RFB-320
-    //RFB-320-quant-ADMM-32
-    //RFB-320-quant-KL-5792
-    //slim-320
-    //slim-320-quant-ADMM-50 
-    //量化模型需要使用CPU方式 net.cpp中修改 sch_config.type = (MNNForwardType)MNN_FORWARD_CPU
+    //face_320
+    //face_320_simple
+    //face_320_quantization_ADMM_32
+    //face_320_quantization_KL_5792
+    //face_320_quantization_ADMM_50
+    //quantized model should modify sch_config.type = (MNNForwardType)MNN_FORWARD_CPU in net.cpp
     // change names
-//    string str = tFaceModelDir + "RFB-320-quant-ADMM-32.mnn";
-    string str = tFaceModelDir + "slim-320-quant-ADMM-50.mnn";
+
+//    string str = tFaceModelDir + "face_320.mnn";
+//    string str = tFaceModelDir + "face_320_simple.mnn";
+    string str = tFaceModelDir + "face_320_quantization_ADMM_32.mnn";
+//    string str = tFaceModelDir + "face_320_quantization_KL_5792.mnn";
+//    string str = tFaceModelDir + "face_slim_320_quantization_ADMM_50.mnn";
 
     ultra = new  Face(str, 320, 240, 4, 0.65 ); // config model input
 
@@ -85,23 +89,19 @@ Java_com_facesdk_FaceSDKNative_FaceDetect(JNIEnv *env, jobject instance, jbyteAr
         return NULL;
     }
 
-
     std::vector<FaceInfo> face_info;
     //detect face
+    LOGD("imageWidth=%d, imageHeight=%d,imageChannel=%d",imageWidth,imageHeight,imageChannel);
     ultra ->detect((unsigned char*)imageDate, imageWidth, imageHeight, imageChannel, face_info );
-
     int32_t num_face = static_cast<int32_t>(face_info.size());
-
     int out_size = 1+num_face*4;
     int *allfaceInfo = new int[out_size];
     allfaceInfo[0] = num_face;
     for (int i=0; i<num_face; i++) {
-
         allfaceInfo[4*i+1] = face_info[i].x1;//left
         allfaceInfo[4*i+2] = face_info[i].y1;//top
         allfaceInfo[4*i+3] = face_info[i].x2;//right
         allfaceInfo[4*i+4] = face_info[i].y2;//bottom
-
     }
 
     jintArray tFaceInfo = env->NewIntArray(out_size);

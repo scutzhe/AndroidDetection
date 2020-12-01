@@ -21,10 +21,8 @@ Inference_engine::~Inference_engine()
 
 int Inference_engine::load_param(std::string & file, int num_thread)
 {
-
     if (!file.empty())
     {
-
         if (file.find(".mnn") != std::string::npos)
         {
 
@@ -53,8 +51,7 @@ int Inference_engine::load_param(std::string & file, int num_thread)
     return 0;
 }
 
-int Inference_engine::set_params(int srcType, int dstType, 
-                                 float *mean, float *scale)
+int Inference_engine::set_params(int srcType, int dstType,float *mean, float *scale)
 {
     config.destFormat   = (MNN::CV::ImageFormat)dstType;
     config.sourceFormat = (MNN::CV::ImageFormat)srcType;
@@ -77,7 +74,6 @@ int Inference_engine::infer_img(unsigned char *data, int width, int height, int 
     int h = height;
     int w = width;
     int c = channel;
-    // auto resize for full conv network.
     bool auto_resize = false;
     if ( !auto_resize )
     {
@@ -85,14 +81,11 @@ int Inference_engine::infer_img(unsigned char *data, int width, int height, int 
         netPtr->resizeTensor(tensorPtr, dims);
         netPtr->resizeSession(sessionPtr);
     }
-
     transform.postScale(1.0f/dstw, 1.0f/dsth);
     transform.postScale(w, h);
 
     std::unique_ptr<MNN::CV::ImageProcess> process(MNN::CV::ImageProcess::create(config.sourceFormat, config.destFormat, config.mean, 3, config.normal, 3));
-
     process->setMatrix(transform);
-
     process->convert(data, w, h, w*c, tensorPtr);
     netPtr->runSession(sessionPtr);
 
@@ -104,20 +97,14 @@ int Inference_engine::infer_img(unsigned char *data, int width, int height, int 
             layer_name = out.layer_name[i].c_str();
         }
         MNN::Tensor* tensorOutPtr = netPtr->getSessionOutput(sessionPtr, layer_name);
-
         std::vector<int> shape = tensorOutPtr->shape();
-
         auto tensor = reinterpret_cast<MNN::Tensor*>(tensorOutPtr);
-
         std::unique_ptr<MNN::Tensor> hostTensor(new MNN::Tensor(tensor, tensor->getDimensionType(), true));
         tensor->copyToHostTensor(hostTensor.get());
         tensor = hostTensor.get();
-
         auto size = tensorOutPtr->elementSize();
         std::shared_ptr<float> destPtr(new float[size * sizeof(float)]);
-
         ::memcpy(destPtr.get(), tensorOutPtr->host<float>(), size * sizeof(float));
-
         out.out_feat.push_back(destPtr);
     }
 

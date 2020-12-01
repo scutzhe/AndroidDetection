@@ -1,0 +1,9 @@
+{
+  "ndkDirProperty": "/home/zhex/Android/android-ndk-r21",
+  "sdkFolder": "/home/zhex/Android/Sdk",
+  "sideBySideNdkFolderNames": [
+    "21.3.6528147",
+    "21.0.6113669",
+    "21.1.6352462"
+  ]
+}

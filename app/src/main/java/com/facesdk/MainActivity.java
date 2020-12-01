@@ -77,11 +77,11 @@ public class MainActivity extends Activity {
         //copy model
         try {
             //RFB-320-quant-ADMM-32
-            copyBigDataToSD("RFB-320.mnn");
-            copyBigDataToSD("RFB-320-quant-ADMM-32.mnn");
-            copyBigDataToSD("RFB-320-quant-KL-5792.mnn");
-            copyBigDataToSD("slim-320.mnn");
-            copyBigDataToSD("slim-320-quant-ADMM-50.mnn");
+            copyBigDataToSD("face_320.mnn");
+            copyBigDataToSD("face_320_quantization_ADMM_32.mnn");
+            copyBigDataToSD("face_320_quantization_KL_5792.mnn");
+            copyBigDataToSD("face_320_simple.mnn");
+            copyBigDataToSD("face_slim_320_quantization_ADMM_50.mnn");
 
         } catch (IOException e) {
             e.printStackTrace();

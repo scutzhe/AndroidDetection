@@ -25,18 +25,13 @@ typedef struct FaceInfo {
 class Face {
 public:
     Face(std::string &mnn_path, int input_width, int input_length, int num_thread_ = 4, float score_threshold_ = 0.7, float iou_threshold_ = 0.35);
-
     //~Face();
-
     int detect(unsigned char *raw_image, int width, int height, int channel, std::vector<FaceInfo> &face_list);
-
     void generateBBox(std::vector<FaceInfo> &bbox_collection,  float* scores, float* boxes);
-
     void nms(std::vector<FaceInfo> &input, std::vector<FaceInfo> &output, int type = blending_nms);
 
 private:
     Inference_engine ultra_net;
-
     int num_thread;
     int image_w;
     int image_h;
