@@ -76,12 +76,7 @@ public class MainActivity extends Activity {
 
         //copy model
         try {
-            //RFB-320-quant-ADMM-32
-            copyBigDataToSD("face_320.mnn");
-            copyBigDataToSD("face_320_quantization_ADMM_32.mnn");
-            copyBigDataToSD("face_320_quantization_KL_5792.mnn");
-            copyBigDataToSD("face_320_simple.mnn");
-            copyBigDataToSD("face_slim_320_quantization_ADMM_50.mnn");
+            copyBigDataToSD("face_keypoint_0225.mnn");
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -90,11 +85,8 @@ public class MainActivity extends Activity {
         File sdDir = Environment.getExternalStorageDirectory();//get model store dir
         String sdPath = sdDir.toString() + "/facesdk/";
         faceSDKNative.FaceDetectionModelInit(sdPath);
-
-
         infoResult = (TextView) findViewById(R.id.infoResult);
         imageView = (ImageView) findViewById(R.id.imageView);
-
         Button buttonImage = (Button) findViewById(R.id.buttonImage);
         buttonImage.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -116,38 +108,27 @@ public class MainActivity extends Activity {
                 byte[] imageDate = getPixelsRGBA(yourSelectedImage);
 
                 long timeDetectFace = System.currentTimeMillis();
-                //do FaceDetect
-                int faceInfo[] =  faceSDKNative.FaceDetect(imageDate, width, height,4);
+                //do FaceDetection
+                float faceKeyPoint[] =  faceSDKNative.FaceDetection(imageDate, width, height,4);
                 timeDetectFace = System.currentTimeMillis() - timeDetectFace;
 
                 //Get Results
-               if (faceInfo.length>1) {
-                   int faceNum = faceInfo[0];
-                   infoResult.setText("detect time："+timeDetectFace+"ms,   face number：" + faceNum);
-                   Log.i(TAG, "detect time："+timeDetectFace);
-                   Log.i(TAG, "face num：" + faceNum );
+               infoResult.setText("detect time："+timeDetectFace+"ms");
+               Log.i(TAG, "detect time："+timeDetectFace);
+               Bitmap drawBitmap = yourSelectedImage.copy(Bitmap.Config.ARGB_8888, true);
 
-                   Bitmap drawBitmap = yourSelectedImage.copy(Bitmap.Config.ARGB_8888, true);
-                   for (int i=0; i<faceNum; i++) {
-                       int left, top, right, bottom;
-                       Canvas canvas = new Canvas(drawBitmap);
-                       Paint paint = new Paint();
-                       left = faceInfo[1+4*i];
-                       top = faceInfo[2+4*i];
-                       right = faceInfo[3+4*i];
-                       bottom = faceInfo[4+4*i];
-                       paint.setColor(Color.RED);
-                       paint.setStyle(Paint.Style.STROKE);
-                       paint.setStrokeWidth(5);
-                       //Draw rect
-                       canvas.drawRect(left, top, right, bottom, paint);
-
-                   }
-                   imageView.setImageBitmap(drawBitmap);
-                }else{
-                   infoResult.setText("no face found");
+               for (int i=0; i<98; i++) {
+                   Canvas canvas = new Canvas(drawBitmap);
+                   Paint paint = new Paint();
+                   paint.setColor(Color.RED);
+                   paint.setStyle(Paint.Style.STROKE);
+                   paint.setStrokeWidth(5);
+                   //Draw rect
+                   float x = faceKeyPoint[i*2];
+                   float y = faceKeyPoint[i*2 + 1];
+                   canvas.drawCircle(x,y,0.1f, paint);
                }
-
+               imageView.setImageBitmap(drawBitmap);
             }
         });
         // ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -166,11 +147,8 @@ public class MainActivity extends Activity {
             try {
                 if (requestCode == SELECT_IMAGE) {
                     Bitmap bitmap = decodeUri(selectedImage);
-
                     Bitmap rgba = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-
                     yourSelectedImage = rgba;
-
                     imageView.setImageBitmap(yourSelectedImage);
                 }
             } catch (FileNotFoundException e) {

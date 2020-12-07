@@ -1,6 +1,5 @@
 #ifndef Face_hpp
 #define Face_hpp
-
 #pragma once
 
 #include <algorithm>
@@ -8,57 +7,30 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "net.h"
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/types_c.h>
+#include "Backend.hpp"
+#include "Interpreter.hpp"
+#include "MNNDefine.h"
+#include "Tensor.hpp"
+#include "revertMNNModel.hpp"
+using namespace  std;
 
-#define num_featuremap 4
-#define hard_nms 1
-#define blending_nms 2 /* mix nms was been proposaled in paper blaze face, aims to minimize the temporal jitter*/
-typedef struct FaceInfo {
-    float x1;
-    float y1;
-    float x2;
-    float y2;
-    float score;
-
-} FaceInfo;
+#define TAG "KEYPOINT"
+#define LOGInfo(...) __android_log_print(ANDROID_LOG_INFO,TAG,__VA_ARGS__)
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 
 class Face {
 public:
-    Face(std::string &mnn_path, int input_width, int input_length, int num_thread_ = 4, float score_threshold_ = 0.7, float iou_threshold_ = 0.35);
-    //~Face();
-    int detect(unsigned char *raw_image, int width, int height, int channel, std::vector<FaceInfo> &face_list);
-    void generateBBox(std::vector<FaceInfo> &bbox_collection,  float* scores, float* boxes);
-    void nms(std::vector<FaceInfo> &input, std::vector<FaceInfo> &output, int type = blending_nms);
-
+    Face(std::string model_path);
+    static cv::Mat transBufferToMat(unsigned char* pBuffer, int width, int height, int channel, int nBPB);
+    float * detection(unsigned char *raw_image, int width, int height, int channel);
 private:
-    Inference_engine ultra_net;
-    int num_thread;
-    int image_w;
-    int image_h;
-
-    int in_w;
-    int in_h;
-    int num_anchors;
-
-    float score_threshold;
-    float iou_threshold;
-
-    float mean_vals[3] = {127, 127, 127};
-    float norm_vals[3] = {1.0 / 128, 1.0 / 128, 1.0 / 128};
-
-    const float center_variance = 0.1;
-    const float size_variance = 0.2;
-    const std::vector<std::vector<float>> min_boxes = {
-            {10.0f,  16.0f,  24.0f},
-            {32.0f,  48.0f},
-            {64.0f,  96.0f},
-            {128.0f, 192.0f, 256.0f}};
-    const std::vector<float> strides = {8.0, 16.0, 32.0, 64.0};
-    std::vector<std::vector<float>> featuremap_size;
-    std::vector<std::vector<float>> shrinkage_size;
-    std::vector<int> w_h_list;
-
-    std::vector<std::vector<float>> priors = {};
+    std::string model_path;
+    int WIDTH = 96;
+    int HEIGHT = 96;
+    int CHANNELS = 3;
+    int THREADS = 1;
 };
 
 #endif /* Face_hpp */

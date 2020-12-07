@@ -1,160 +1,103 @@
 #include "Face.hpp"
-#define TAG "cpp"
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
-#define clip(x, y) (x < 0 ? 0 : (x > y ? y : x))
 
-using namespace std;
-Face::Face(std::string &mnn_path,
-           int input_width, int input_length, int num_thread_,
-           float score_threshold_, float iou_threshold_) {
-    num_thread = num_thread_;
-    score_threshold = score_threshold_;
-    iou_threshold = iou_threshold_;
-    in_w = input_width;
-    in_h = input_length;
-    w_h_list = {in_w, in_h};
-
-    for (auto size : w_h_list) {
-        std::vector<float> fm_item;
-        for (float stride : strides) {
-            fm_item.push_back(ceil(size / stride));
-        }
-        featuremap_size.push_back(fm_item);
-    }
-
-    for (auto size : w_h_list) {
-        shrinkage_size.push_back(strides);
-    }
-    /* generate prior anchors */
-    for (int index = 0; index < num_featuremap; index++) {
-        float scale_w = in_w / shrinkage_size[0][index];
-        float scale_h = in_h / shrinkage_size[1][index];
-        for (int j = 0; j < featuremap_size[1][index]; j++) {
-            for (int i = 0; i < featuremap_size[0][index]; i++) {
-                float x_center = (i + 0.5) / scale_w;
-                float y_center = (j + 0.5) / scale_h;
-
-                for (float k : min_boxes[index]) {
-                    float w = k / in_w;
-                    float h = k / in_h;
-                    priors.push_back({clip(x_center, 1), clip(y_center, 1), clip(w, 1), clip(h, 1)});
-                }
-            }
-        }
-    }
-    /* generate prior anchors finished */
-    num_anchors = priors.size();
-    ultra_net.load_param(mnn_path, num_thread);
-    ultra_net.set_params(0, 1, mean_vals, norm_vals);
+Face::Face(std::string mnn_path){
+    mnn_path = model_path;
 }
 
-int Face::detect(unsigned char *data, int width, int height, int channel, std::vector<FaceInfo> &face_list ) {
-    image_h = height;
-    image_w = width;
-    Inference_engine_tensor  out;
-    string scores = "scores";
-    out.add_name(scores);
-    string boxes = "boxes";
-    out.add_name(boxes);
-    LOGD("in_w=%d,in_h=%d",in_w,in_h);
-    ultra_net.infer_img(data, width, height, channel, in_w, in_h, out);
-    std::vector<FaceInfo> bbox_collection;
-    generateBBox(bbox_collection, out.score(0).get() , out.score(1).get());
-    nms(bbox_collection, face_list);
-    return 0;
-}
-
-void Face::generateBBox(std::vector<FaceInfo> &bbox_collection, float* scores, float* boxes) {
-    for (int i = 0; i < num_anchors; i++) {
-        if (scores[i * 2 + 1 ] > score_threshold) {
-            FaceInfo rects;
-            float x_center = boxes[i * 4] * center_variance * priors[i][2] + priors[i][0];
-            float y_center = boxes[i * 4 + 1] * center_variance * priors[i][3] + priors[i][1];
-            float w = exp(boxes[i * 4 + 2] * size_variance) * priors[i][2];
-            float h = exp(boxes[i * 4 + 3] * size_variance) * priors[i][3];
-
-            rects.x1 = clip(x_center - w / 2.0, 1) * image_w;
-            rects.y1 = clip(y_center - h / 2.0, 1) * image_h;
-            rects.x2 = clip(x_center + w / 2.0, 1) * image_w;
-            rects.y2 = clip(y_center + h / 2.0, 1) * image_h;
-            rects.score = clip(scores[i * 2 + 1 ], 1);
-
-            bbox_collection.push_back(rects);
+cv::Mat Face:: transBufferToMat(unsigned char* pBuffer, int width, int height, int channel, int nBPB){
+    cv::Mat mDst;
+    if (channel == 3){
+        if (nBPB == 1){
+            mDst = cv::Mat::zeros(cv::Size(width, height), CV_8UC3);
+        }
+        else if (nBPB == 2){
+            mDst = cv::Mat::zeros(cv::Size(width, height), CV_16UC3);
         }
     }
-}
-
-void Face::nms(std::vector<FaceInfo> &input, std::vector<FaceInfo> &output, int type) {
-    std::sort(input.begin(), input.end(), [](const FaceInfo &a, const FaceInfo &b) { return a.score > b.score; });
-    int box_num = input.size();
-    std::vector<int> merged(box_num, 0);
-    for (int i = 0; i < box_num; i++) {
-        if (merged[i])
-            continue;
-        std::vector<FaceInfo> buf;
-
-        buf.push_back(input[i]);
-        merged[i] = 1;
-
-        float h0 = input[i].y2 - input[i].y1 + 1;
-        float w0 = input[i].x2 - input[i].x1 + 1;
-
-        float area0 = h0 * w0;
-
-        for (int j = i + 1; j < box_num; j++) {
-            if (merged[j])
-                continue;
-
-            float inner_x0 = input[i].x1 > input[j].x1 ? input[i].x1 : input[j].x1;
-            float inner_y0 = input[i].y1 > input[j].y1 ? input[i].y1 : input[j].y1;
-
-            float inner_x1 = input[i].x2 < input[j].x2 ? input[i].x2 : input[j].x2;
-            float inner_y1 = input[i].y2 < input[j].y2 ? input[i].y2 : input[j].y2;
-
-            float inner_h = inner_y1 - inner_y0 + 1;
-            float inner_w = inner_x1 - inner_x0 + 1;
-
-            if (inner_h <= 0 || inner_w <= 0)
-                continue;
-
-            float inner_area = inner_h * inner_w;
-            float h1 = input[j].y2 - input[j].y1 + 1;
-            float w1 = input[j].x2 - input[j].x1 + 1;
-            float area1 = h1 * w1;
-            float score;
-            score = inner_area / (area0 + area1 - inner_area);
-            if (score > iou_threshold) {
-                merged[j] = 1;
-                buf.push_back(input[j]);
-            }
+    else if (channel == 1){
+        if (nBPB == 1){
+            mDst = cv::Mat::zeros(cv::Size(width, height), CV_8UC1);
         }
-        switch (type) {
-            case hard_nms: {
-                output.push_back(buf[0]);
-                break;
-            }
-            case blending_nms: {
-                float total = 0;
-                for (int i = 0; i < buf.size(); i++) {
-                    total += exp(buf[i].score);
-                }
-                FaceInfo rects;
-                memset(&rects, 0, sizeof(rects));
-                for (int i = 0; i < buf.size(); i++) {
-                    float rate = exp(buf[i].score) / total;
-                    rects.x1 += buf[i].x1 * rate;
-                    rects.y1 += buf[i].y1 * rate;
-                    rects.x2 += buf[i].x2 * rate;
-                    rects.y2 += buf[i].y2 * rate;
-                    rects.score += buf[i].score * rate;
-                }
-                output.push_back(rects);
-                break;
-            }
-            default: {
-                printf("wrong type of nms.");
-                exit(-1);
-            }
+        else if (nBPB == 2){
+            mDst = cv::Mat::zeros(cv::Size(width, height), CV_16UC1);
         }
     }
+
+    else if(channel == 4){
+        if (nBPB == 1){
+            mDst = cv::Mat::zeros(cv::Size(width, height), CV_8UC4);
+        }
+        else if (nBPB == 2){
+            mDst = cv::Mat::zeros(cv::Size(width, height), CV_16UC4);
+        }
+    }
+
+    for (int j = 0; j < height; ++j){
+        unsigned char* data = mDst.ptr<unsigned char>(j);
+        unsigned char* pSubBuffer = pBuffer + (height - 1 - j) * width  * channel * nBPB;
+        memcpy(data, pSubBuffer, width * channel * nBPB);
+    }
+    if (channel == 3){
+        cv::cvtColor(mDst, mDst, CV_RGB2BGR);
+    }
+    else if (channel == 1){
+        cv::cvtColor(mDst, mDst, CV_GRAY2BGR);
+    }
+    else if (channel == 4){
+        cv::cvtColor(mDst, mDst, CV_RGBA2BGR);
+    }
+    return mDst;
+}
+
+float* Face:: detection(unsigned char *raw_image, int width, int height, int channel) {
+    //input_data
+    cv::Mat image_input;
+    cv::Mat image = transBufferToMat(raw_image,width,height,channel,1);
+    LOGInfo("image.cols=%d,image.rows=%d",image.cols,image.rows);
+    cv::resize(image,image_input,cv::Size(WIDTH,HEIGHT),cv::INTER_CUBIC);
+    cv::cvtColor(image_input,image_input,CV_BGR2RGB);
+
+    // load and config mnn model
+    auto revertor = std::unique_ptr<Revert>(new Revert(model_path.c_str()));
+    revertor->initialize();
+    auto modelBuffer      = revertor->getBuffer();
+    const auto bufferSize = revertor->getBufferSize();
+    auto net = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromBuffer(modelBuffer, bufferSize));
+    revertor.reset();
+    MNN::ScheduleConfig config;
+    config.numThread = THREADS;
+    config.type      = static_cast<MNNForwardType>(forward);
+    MNN::BackendConfig backendConfig;
+    config.backendConfig = &backendConfig;
+
+    auto session = net->createSession(config);
+    net->releaseModel();
+
+    clock_t start = clock();
+    // preprocessing
+    image.convertTo(image, CV_32FC3);
+    image = (image - 123.0) / 58.0;
+
+    // wrapping input tensor, convert nhwc to nchw
+    std::vector<int> dims{1, HEIGHT, WIDTH, 3};
+    auto nhwc_Tensor = MNN::Tensor::create<float>(dims, NULL, MNN::Tensor::TENSORFLOW);
+    auto nhwc_data   = nhwc_Tensor->host<float>();
+    auto nhwc_size   = nhwc_Tensor->size();
+    ::memcpy(nhwc_data, image.data, nhwc_size);
+
+    std::string input_tensor = "data";
+    auto inputTensor  = net->getSessionInput(session, nullptr);
+    inputTensor->copyFromHostTensor(nhwc_Tensor);
+
+    // run network
+    net->runSession(session);
+
+    // get output data
+    std::string output_tensor_name0 = "conv5_fwd";
+    MNN::Tensor *tensor_lmks  = net->getSessionOutput(session, output_tensor_name0.c_str());
+    MNN::Tensor tensor_lmks_host(tensor_lmks, tensor_lmks->getDimensionType());
+    tensor_lmks->copyToHostTensor(&tensor_lmks_host);
+
+    // post processing steps
+    auto lmks_dataPtr  = tensor_lmks_host.host<float>();
 }

@@ -4,3 +4,6 @@
 0	582	1606787291	CMakeFiles/facedetect.dir/src/main/cpp/Face.cpp.o	19f79cf90eb8e4cc
 582	613	1606787291	../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libfacedetect.so	98c8c732041bf874
 0	3	0	clean	3305464fe52076a7
+0	1	0	clean	3305464fe52076a7
+0	11	1607309961	build.ninja	b87a7ab0f7ab41e2
+0	1	0	clean	3305464fe52076a7
