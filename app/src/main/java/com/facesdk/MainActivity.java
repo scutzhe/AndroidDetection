@@ -10,6 +10,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
@@ -66,18 +67,15 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-
         // For API 23+ you need to request the read/write permissions even if they are already in your manifest.
         int currentapiVersion = android.os.Build.VERSION.SDK_INT;
-
-        //if (currentapiVersion >= Build.VERSION_CODES.M) {
+        if (currentapiVersion >= Build.VERSION_CODES.M) {
             verifyPermissions(this);
-        //}
+        }
 
         //copy model
         try {
             copyBigDataToSD("face_keypoint_0225.mnn");
-
         } catch (IOException e) {
             e.printStackTrace();
         }

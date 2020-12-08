@@ -5,16 +5,10 @@
 #include <vector>
 #include "Face.hpp"
 
-#define TAG "FaceSDKNative"
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
-
-using namespace std;
-
 static Face *face_keypoint;
 bool detection_sdk_init_ok = false;
 
 extern "C" {
-
 JNIEXPORT jboolean JNICALL
 Java_com_facesdk_FaceSDKNative_FaceDetectionModelInit(JNIEnv *env, jobject instance,
                                                       jstring faceDetectionModelPath_) {
@@ -38,6 +32,7 @@ Java_com_facesdk_FaceSDKNative_FaceDetectionModelInit(JNIEnv *env, jobject insta
     string tFaceModelDir = faceDetectionModelPath;
     string tLastChar = tFaceModelDir.substr(tFaceModelDir.length()-1, 1);
     string model_path = tFaceModelDir + "face_keypoint_0225.mnn";
+    LOGInfo(KEY_TAG,model_path.c_str());
     face_keypoint = new  Face(model_path); // config model input
     env->ReleaseStringUTFChars(faceDetectionModelPath_, faceDetectionModelPath);
     detection_sdk_init_ok = true;
@@ -86,7 +81,7 @@ JNIEXPORT jboolean JNICALL
 Java_com_facesdk_FaceSDKNative_FaceDetectionModelUnInit(JNIEnv *env, jobject instance) {
     jboolean tDetectionUnInit = false;
     if (!detection_sdk_init_ok) {
-        LOGD("sdk not inited, do nothing");
+        LOGD("sdk not init, do nothing");
         return true;
     }
     delete face_keypoint;
@@ -95,5 +90,4 @@ Java_com_facesdk_FaceSDKNative_FaceDetectionModelUnInit(JNIEnv *env, jobject ins
     LOGD("sdk release ok");
     return tDetectionUnInit;
 }
-
 }

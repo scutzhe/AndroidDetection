@@ -1,0 +1,7 @@
+Executable : /home/zhex/Android/Sdk/cmake/3.10.2.4988404/bin/ninja
+arguments : 
+-C
+/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/release/armeabi-v7a
+face_detection
+jvmArgs : 
+

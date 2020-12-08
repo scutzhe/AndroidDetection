@@ -1305,7 +1305,7 @@ CVAPI(void)  cvPerspectiveTransform( const CvArr* src, CvArr* dst,
                                      const CvMat* mat );
 
 /** Calculates (A-delta)*(A-delta)^T (order=0) or (A-delta)^T*(A-delta) (order=1) */
-CVAPI(void) cvMface_keypointnsposed( const CvArr* src, CvArr* dst, int order,
+CVAPI(void) cvMulTransposed( const CvArr* src, CvArr* dst, int order,
                              const CvArr* delta CV_DEFAULT(NULL),
                              double scale CV_DEFAULT(1.) );
 

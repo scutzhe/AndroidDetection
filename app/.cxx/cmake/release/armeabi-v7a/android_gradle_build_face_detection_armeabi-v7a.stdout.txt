@@ -1,0 +1,34 @@
+ninja: Entering directory `/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/release/armeabi-v7a'
+[1/3] Building CXX object CMakeFiles/face_detection.dir/src/main/cpp/jni.cpp.o
+[2/3] Building CXX object CMakeFiles/face_detection.dir/src/main/cpp/Face.cpp.o
+../../../../src/main/cpp/Face.cpp:103:1: warning: control reaches end of non-void function [-Wreturn-type]
+}
+^
+1 warning generated.
+[3/3] Linking CXX shared library ../../../../build/intermediates/cmake/release/obj/armeabi-v7a/libface_detection.so
+FAILED: ../../../../build/intermediates/cmake/release/obj/armeabi-v7a/libface_detection.so 
+: && /home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ --target=armv7-none-linux-androideabi21 --gcc-toolchain=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/sysroot -fPIC -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security   -std=c++11 -Oz -DNDEBUG  -Wl,--exclude-libs,libgcc_real.a -Wl,--exclude-libs,libatomic.a -Wl,--build-id -Wl,--fatal-warnings -Wl,--exclude-libs,libunwind.a -Wl,--no-undefined -Qunused-arguments -shared -Wl,-soname,libface_detection.so -o ../../../../build/intermediates/cmake/release/obj/armeabi-v7a/libface_detection.so CMakeFiles/face_detection.dir/src/main/cpp/jni.cpp.o CMakeFiles/face_detection.dir/src/main/cpp/Face.cpp.o  -llib_opencv ../../../../src/main/jniLibs/armeabi-v7a/libMNN.so ../../../../src/main/jniLibs/armeabi-v7a/libMNN_CL.so -ljnigraphics -lz /home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/21/liblog.so -latomic -lm && :
+/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/lib/gcc/arm-linux-androideabi/4.9.x/../../../../arm-linux-androideabi/bin/ld: error: cannot find -llib_opencv
+../../../../src/main/cpp/include/opencv2/core/cvstd.hpp:648: error: undefined reference to 'cv::String::deallocate()'
+../../../../src/main/cpp/include/opencv2/core/cvstd.hpp:656: error: undefined reference to 'cv::String::deallocate()'
+../../../../src/main/cpp/Face.cpp:11: error: undefined reference to 'cv::Mat::zeros(cv::Size_<int>, int)'
+../../../../src/main/cpp/Face.cpp:19: error: undefined reference to 'cv::Mat::zeros(cv::Size_<int>, int)'
+../../../../src/main/cpp/Face.cpp:14: error: undefined reference to 'cv::Mat::zeros(cv::Size_<int>, int)'
+../../../../src/main/cpp/Face.cpp:28: error: undefined reference to 'cv::Mat::zeros(cv::Size_<int>, int)'
+../../../../src/main/cpp/Face.cpp:41: error: undefined reference to 'cv::cvtColor(cv::_InputArray const&, cv::_OutputArray const&, int, int)'
+../../../../src/main/cpp/Face.cpp:44: error: undefined reference to 'cv::cvtColor(cv::_InputArray const&, cv::_OutputArray const&, int, int)'
+../../../../src/main/cpp/Face.cpp:47: error: undefined reference to 'cv::cvtColor(cv::_InputArray const&, cv::_OutputArray const&, int, int)'
+../../../../src/main/cpp/include/opencv2/core/mat.inl.hpp:704: error: undefined reference to 'cv::fastFree(void*)'
+../../../../src/main/cpp/Face.cpp:57: error: undefined reference to 'cv::resize(cv::_InputArray const&, cv::_OutputArray const&, cv::Size_<int>, double, double, int)'
+../../../../src/main/cpp/Face.cpp:58: error: undefined reference to 'cv::cvtColor(cv::_InputArray const&, cv::_OutputArray const&, int, int)'
+../../../../src/main/cpp/Face.cpp:61: error: undefined reference to 'Revert::Revert(char const*)'
+../../../../src/main/cpp/Face.cpp:62: error: undefined reference to 'Revert::initialize()'
+../../../../src/main/cpp/Face.cpp:63: error: undefined reference to 'Revert::getBuffer() const'
+../../../../src/main/cpp/Face.cpp:64: error: undefined reference to 'Revert::getBufferSize() const'
+../../../../src/main/cpp/Face.cpp:78: error: undefined reference to 'cv::Mat::convertTo(cv::_OutputArray const&, int, double, double) const'
+../../../../src/main/cpp/Face.cpp:79: error: undefined reference to 'cv::operator-(cv::Mat const&, cv::Scalar_<double> const&)'
+../../../../src/main/cpp/Face.cpp:79: error: undefined reference to 'cv::operator/(cv::MatExpr const&, double)'
+../../../../src/main/cpp/include/opencv2/core/mat.inl.hpp:816: error: undefined reference to 'cv::Mat::deallocate()'
+/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include/c++/v1/memory:2338: error: undefined reference to 'Revert::~Revert()'
+clang++: error: linker command failed with exit code 1 (use -v to see invocation)
+ninja: build stopped: subcommand failed.

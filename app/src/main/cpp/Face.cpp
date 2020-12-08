@@ -2,6 +2,14 @@
 
 Face::Face(std::string mnn_path){
     mnn_path = model_path;
+    key_interpreter = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromFile(mnn_path.c_str()));
+    MNN::ScheduleConfig config;
+    config.numThread = THREADS;
+    MNN::BackendConfig backendConfig;
+    backendConfig.precision = (MNN::BackendConfig::PrecisionMode) 2;
+    config.backendConfig = &backendConfig;
+    key_session = key_interpreter->createSession(config);
+    input_tensor = key_interpreter->getSessionInput(key_session, nullptr);
 }
 
 cv::Mat Face:: transBufferToMat(unsigned char* pBuffer, int width, int height, int channel, int nBPB){
@@ -53,51 +61,25 @@ float* Face:: detection(unsigned char *raw_image, int width, int height, int cha
     //input_data
     cv::Mat image_input;
     cv::Mat image = transBufferToMat(raw_image,width,height,channel,1);
-    LOGInfo("image.cols=%d,image.rows=%d",image.cols,image.rows);
+//    LOGInfo("image.cols=%d,image.rows=%d",image.cols,image.rows);
     cv::resize(image,image_input,cv::Size(WIDTH,HEIGHT),cv::INTER_CUBIC);
-    cv::cvtColor(image_input,image_input,CV_BGR2RGB);
 
     // load and config mnn model
-    auto revertor = std::unique_ptr<Revert>(new Revert(model_path.c_str()));
-    revertor->initialize();
-    auto modelBuffer      = revertor->getBuffer();
-    const auto bufferSize = revertor->getBufferSize();
-    auto net = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromBuffer(modelBuffer, bufferSize));
-    revertor.reset();
-    MNN::ScheduleConfig config;
-    config.numThread = THREADS;
-    config.type      = static_cast<MNNForwardType>(forward);
-    MNN::BackendConfig backendConfig;
-    config.backendConfig = &backendConfig;
+    key_interpreter->resizeTensor(input_tensor, {1, 3, HEIGHT, WIDTH});
+    key_interpreter->resizeSession(key_session);
+    std::shared_ptr<MNN::CV::ImageProcess> pre_treat(
+            MNN::CV::ImageProcess::create(MNN::CV::BGR, MNN::CV::RGB, MEAN, 3,
+                                          NORMALIZATION, 3));
+    pre_treat->convert(image.data, WIDTH, HEIGHT, image.step[0], input_tensor);
 
-    auto session = net->createSession(config);
-    net->releaseModel();
+    // run inference
+    key_interpreter->runSession(key_session);
 
-    clock_t start = clock();
-    // preprocessing
-    image.convertTo(image, CV_32FC3);
-    image = (image - 123.0) / 58.0;
-
-    // wrapping input tensor, convert nhwc to nchw
-    std::vector<int> dims{1, HEIGHT, WIDTH, 3};
-    auto nhwc_Tensor = MNN::Tensor::create<float>(dims, NULL, MNN::Tensor::TENSORFLOW);
-    auto nhwc_data   = nhwc_Tensor->host<float>();
-    auto nhwc_size   = nhwc_Tensor->size();
-    ::memcpy(nhwc_data, image.data, nhwc_size);
-
-    std::string input_tensor = "data";
-    auto inputTensor  = net->getSessionInput(session, nullptr);
-    inputTensor->copyFromHostTensor(nhwc_Tensor);
-
-    // run network
-    net->runSession(session);
-
-    // get output data
-    std::string output_tensor_name0 = "conv5_fwd";
-    MNN::Tensor *tensor_lmks  = net->getSessionOutput(session, output_tensor_name0.c_str());
-    MNN::Tensor tensor_lmks_host(tensor_lmks, tensor_lmks->getDimensionType());
-    tensor_lmks->copyToHostTensor(&tensor_lmks_host);
-
-    // post processing steps
-    auto lmks_dataPtr  = tensor_lmks_host.host<float>();
+    // get output data and no post deal
+    std::string output_tensor_name = "conv5_fwd";
+    MNN::Tensor *tensor_landmarks  = key_interpreter->getSessionOutput(key_session, output_tensor_name.c_str());
+    MNN::Tensor tensor_landmarks_host(tensor_landmarks, tensor_landmarks->getDimensionType());
+    tensor_landmarks->copyToHostTensor(&tensor_landmarks_host);
+    auto landmarks_data  = tensor_landmarks_host.host<float>();
+    return landmarks_data;
 }

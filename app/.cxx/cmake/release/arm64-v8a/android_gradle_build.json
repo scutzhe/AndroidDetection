@@ -1,7 +1,7 @@
 {
   "stringTable": {
     "0": "/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/release/arm64-v8a",
-    "1": "--target=aarch64-none-linux-android21 --gcc-toolchain=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/sysroot -DMNN_USE_LOGCAT -Dfacedetect_EXPORTS -I../../../../src/main/cpp/include -I../../../../src/main/cpp -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -std=c++11 -O2 -DNDEBUG -fPIC"
+    "1": "--target=aarch64-none-linux-android21 --gcc-toolchain=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/sysroot -DMNN_USE_LOGCAT -Dface_detection_EXPORTS -I../../../../src/main/cpp/include -I../../../../src/main/cpp -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -std=c++11 -O2 -DNDEBUG -fPIC"
   },
   "buildFiles": [
     "/home/zhex/git_me/AndroidDetection/app/CMakeLists.txt",
@@ -13,12 +13,12 @@
   ],
   "buildTargetsCommand": "/home/zhex/Android/Sdk/cmake/3.10.2.4988404/bin/ninja  -C \"/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/release/arm64-v8a\" {LIST_OF_TARGETS_TO_BUILD}",
   "libraries": {
-    "facedetect-Release-arm64-v8a": {
-      "buildCommand": "/home/zhex/Android/Sdk/cmake/3.10.2.4988404/bin/ninja -C \"/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/release/arm64-v8a\" facedetect",
+    "face_detection-Release-arm64-v8a": {
+      "buildCommand": "/home/zhex/Android/Sdk/cmake/3.10.2.4988404/bin/ninja -C \"/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/release/arm64-v8a\" face_detection",
       "buildType": "release",
       "toolchain": "1562192006",
       "abi": "arm64-v8a",
-      "artifactName": "facedetect",
+      "artifactName": "face_detection",
       "files": [
         {
           "src": "/home/zhex/git_me/AndroidDetection/app/src/main/cpp/jni.cpp",
@@ -29,15 +29,10 @@
           "src": "/home/zhex/git_me/AndroidDetection/app/src/main/cpp/Face.cpp",
           "flagsOrdinal": 1,
           "workingDirectoryOrdinal": 0
-        },
-        {
-          "src": "/home/zhex/git_me/AndroidDetection/app/src/main/cpp/net.cpp",
-          "flagsOrdinal": 1,
-          "workingDirectoryOrdinal": 0
         }
       ],
       "headers": [],
-      "output": "/home/zhex/git_me/AndroidDetection/app/build/intermediates/cmake/release/obj/arm64-v8a/libfacedetect.so",
+      "output": "/home/zhex/git_me/AndroidDetection/app/build/intermediates/cmake/release/obj/arm64-v8a/libface_detection.so",
       "runtimeFiles": [
         "/home/zhex/git_me/AndroidDetection/app/src/main/jniLibs/arm64-v8a/libMNN.so",
         "/home/zhex/git_me/AndroidDetection/app/src/main/jniLibs/arm64-v8a/libMNN_CL.so"

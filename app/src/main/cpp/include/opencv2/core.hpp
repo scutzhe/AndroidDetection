@@ -1638,14 +1638,14 @@ should have the same type as src1 and src2.
 @param dst output matrix; it has the proper size and the same type as
 input matrices.
 @param flags operation flags (cv::GemmFlags)
-@sa mface_keypointnsposed , transform
+@sa mulTransposed , transform
 */
 CV_EXPORTS_W void gemm(InputArray src1, InputArray src2, double alpha,
                        InputArray src3, double beta, OutputArray dst, int flags = 0);
 
 /** @brief Calculates the product of a matrix and its transposition.
 
-The function cv::mface_keypointnsposed calculates the product of src and its
+The function cv::mulTransposed calculates the product of src and its
 transposition:
 \f[\texttt{dst} = \texttt{scale} ( \texttt{src} - \texttt{delta} )^T ( \texttt{src} - \texttt{delta} )\f]
 if aTa=true , and
@@ -1671,7 +1671,7 @@ the output matrix will have the same type as src . Otherwise, it will be
 type=CV_MAT_DEPTH(dtype) that should be either CV_32F or CV_64F .
 @sa calcCovarMatrix, gemm, repeat, reduce
 */
-CV_EXPORTS_W void mface_keypointnsposed( InputArray src, OutputArray dst, bool aTa,
+CV_EXPORTS_W void mulTransposed( InputArray src, OutputArray dst, bool aTa,
                                  InputArray delta = noArray(),
                                  double scale = 1, int dtype = -1 );
 
@@ -1957,7 +1957,7 @@ the set of input vectors.
 @param mean input or output (depending on the flags) array as the average value of the input vectors.
 @param flags operation flags as a combination of #CovarFlags
 @param ctype type of the matrixl; it equals 'CV_64F' by default.
-@sa PCA, mface_keypointnsposed, Mahalanobis
+@sa PCA, mulTransposed, Mahalanobis
 @todo InputArrayOfArrays
 */
 CV_EXPORTS void calcCovarMatrix( const Mat* samples, int nsamples, Mat& covar, Mat& mean,
@@ -2371,7 +2371,7 @@ PCA compressPCA(const Mat& pcaset, int maxComponents,
     return pca;
 }
 @endcode
-@sa calcCovarMatrix, mface_keypointnsposed, SVD, dft, dct
+@sa calcCovarMatrix, mulTransposed, SVD, dft, dct
 */
 class CV_EXPORTS PCA
 {

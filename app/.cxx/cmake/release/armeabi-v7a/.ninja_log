@@ -1,9 +1,11 @@
 # ninja log v5
+1	1321	1607336046	CMakeFiles/face_detection_keypoint.dir/src/main/cpp/jni.cpp.o	a94c0c9ac4258ca2
+1	1397	1607336046	CMakeFiles/face_detection_keypoint.dir/src/main/cpp/Face.cpp.o	5db3125e6aae4cd0
+0	11	1607405926	build.ninja	bbeeecf5342c76e1
+1397	1412	1607336046	../../../../build/intermediates/cmake/release/obj/armeabi-v7a/libface_detection_keypoint.so	ff5ac9f179628f87
 0	2	0	clean	3305464fe52076a7
-0	2	0	clean	3305464fe52076a7
 0	1	0	clean	3305464fe52076a7
+0	3	0	clean	3305464fe52076a7
+1	11	1607406997	build.ninja	bbeeecf5342c76e1
 0	1	0	clean	3305464fe52076a7
-0	1	0	clean	3305464fe52076a7
-0	1	0	clean	3305464fe52076a7
-0	28	1607309961	build.ninja	bbeeecf5342c76e1
 0	1	0	clean	3305464fe52076a7
