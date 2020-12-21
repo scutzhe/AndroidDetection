@@ -31,9 +31,8 @@ Java_com_facesdk_FaceSDKNative_FaceDetectionModelInit(JNIEnv *env, jobject insta
     }
     string tFaceModelDir = faceDetectionModelPath;
     string tLastChar = tFaceModelDir.substr(tFaceModelDir.length()-1, 1);
-    string model_path = tFaceModelDir + "face_keypoint_0225.mnn";
-    LOGInfo(KEY_TAG,model_path.c_str());
-    face_keypoint = new  Face(model_path); // config model input
+    string model_path = tFaceModelDir + "face_keypoint_0524.mnn";
+    face_keypoint = new  Face(model_path);
     env->ReleaseStringUTFChars(faceDetectionModelPath_, faceDetectionModelPath);
     detection_sdk_init_ok = true;
     tRet = true;

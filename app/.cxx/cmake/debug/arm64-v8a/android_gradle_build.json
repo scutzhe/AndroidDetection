@@ -35,8 +35,7 @@
       "output": "/home/zhex/git_me/AndroidDetection/app/build/intermediates/cmake/debug/obj/arm64-v8a/libface_detection.so",
       "runtimeFiles": [
         "/home/zhex/git_me/AndroidDetection/app/src/main/jniLibs/arm64-v8a/libMNN.so",
-        "/home/zhex/git_me/AndroidDetection/app/src/main/jniLibs/arm64-v8a/libMNN_CL.so",
-        "/home/zhex/git_me/AndroidDetection/app/src/main/jniLibs/arm64-v8a/libopencv_java3.so"
+        "/home/zhex/git_me/AndroidDetection/app/src/main/jniLibs/arm64-v8a/libMNN_CL.so"
       ]
     }
   },

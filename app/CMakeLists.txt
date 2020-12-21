@@ -15,10 +15,10 @@ set_target_properties(MNN_CL
 		PROPERTIES
 		IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI}/libMNN_CL.so)
 
-add_library(lib_opencv STATIC IMPORTED)
-set_target_properties(lib_opencv
-		PROPERTIES
-		IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI}/libopencv_java3.so)
+#add_library(lib_opencv STATIC IMPORTED)
+#set_target_properties(lib_opencv
+#		PROPERTIES
+#		IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI}/libopencv_java3.so)
 
 add_library(face_detection SHARED
 		src/main/cpp/jni.cpp
@@ -30,7 +30,7 @@ add_definitions(-DMNN_USE_LOGCAT)
 target_link_libraries(face_detection
 		MNN
 		MNN_CL
-		lib_opencv
+#		lib_opencv
 		jnigraphics
 		z
 		${log-lib})

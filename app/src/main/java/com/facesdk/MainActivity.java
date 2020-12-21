@@ -75,13 +75,14 @@ public class MainActivity extends Activity {
 
         //copy model
         try {
-            copyBigDataToSD("face_keypoint_0225.mnn");
+            copyBigDataToSD("face_keypoint_0524.mnn");
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         File sdDir = Environment.getExternalStorageDirectory();//get model store dir
         String sdPath = sdDir.toString() + "/facesdk/";
+//        Log.i(TAG, "sdPath:"+sdPath);
         faceSDKNative.FaceDetectionModelInit(sdPath);
         infoResult = (TextView) findViewById(R.id.infoResult);
         imageView = (ImageView) findViewById(R.id.imageView);
@@ -94,7 +95,6 @@ public class MainActivity extends Activity {
                 startActivityForResult(i, SELECT_IMAGE);
             }
         });
-
         Button buttonDetect = (Button) findViewById(R.id.buttonDetect);
         buttonDetect.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -103,16 +103,19 @@ public class MainActivity extends Activity {
                     return;
                 int width = yourSelectedImage.getWidth();
                 int height = yourSelectedImage.getHeight();
+                Log.i(TAG,"width,height:"+width+","+height);
                 byte[] imageDate = getPixelsRGBA(yourSelectedImage);
 
                 long timeDetectFace = System.currentTimeMillis();
                 //do FaceDetection
+                Log.i(TAG, " start detection ...");
                 float faceKeyPoint[] =  faceSDKNative.FaceDetection(imageDate, width, height,4);
+                Log.i(TAG,"keyPoint_size:"+faceKeyPoint.length);
                 timeDetectFace = System.currentTimeMillis() - timeDetectFace;
 
                 //Get Results
-               infoResult.setText("detect time："+timeDetectFace+"ms");
-               Log.i(TAG, "detect time："+timeDetectFace);
+               infoResult.setText("time cost："+timeDetectFace+"ms");
+               Log.i(TAG, "time cost："+timeDetectFace);
                Bitmap drawBitmap = yourSelectedImage.copy(Bitmap.Config.ARGB_8888, true);
 
                for (int i=0; i<98; i++) {
@@ -124,7 +127,11 @@ public class MainActivity extends Activity {
                    //Draw rect
                    float x = faceKeyPoint[i*2];
                    float y = faceKeyPoint[i*2 + 1];
-                   canvas.drawCircle(x,y,0.1f, paint);
+                   int x_ = Math.round(x / 96  * width) ;
+                   int y_ = Math.round(y / 96 * height);
+                   Log.i(TAG,"x_,y_:"+x_+","+y_);
+//                   canvas.drawCircle(x,y,0.1f, paint);
+                   canvas.drawCircle(x_,y_,0.1f, paint);
                }
                imageView.setImageBitmap(drawBitmap);
             }
@@ -195,7 +202,6 @@ public class MainActivity extends Activity {
     }
 
     private void copyBigDataToSD(String strOutFileName) throws IOException {
-        Log.i(TAG, "start copy file " + strOutFileName);
         File sdDir = Environment.getExternalStorageDirectory();//get root dir
         File file = new File(sdDir.toString()+"/facesdk/");
         if (!file.exists()) {
