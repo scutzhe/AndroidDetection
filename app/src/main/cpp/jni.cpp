@@ -9,8 +9,8 @@
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 
 using namespace std;
-
-static Face *ultra;
+static Face *face_detection;
+static KeyPoint *face_keyPoint;
 bool detection_sdk_init_ok = false;
 
 extern "C" {
@@ -38,22 +38,8 @@ Java_com_facesdk_FaceSDKNative_FaceDetectionModelInit(JNIEnv *env, jobject insta
 
     string tFaceModelDir = faceDetectionModelPath;
     string tLastChar = tFaceModelDir.substr(tFaceModelDir.length()-1, 1);
-    //face_320
-    //face_320_simple
-    //face_320_quantization_ADMM_32
-    //face_320_quantization_KL_5792
-    //face_320_quantization_ADMM_50
-    //quantized model should modify sch_config.type = (MNNForwardType)MNN_FORWARD_CPU in net.cpp
-    // change names
-
-//    string str = tFaceModelDir + "face_320.mnn";
-//    string str = tFaceModelDir + "face_320_simple.mnn";
-    string str = tFaceModelDir + "face_320_quantization_ADMM_32.mnn";
-//    string str = tFaceModelDir + "face_320_quantization_KL_5792.mnn";
-//    string str = tFaceModelDir + "face_slim_320_quantization_ADMM_50.mnn";
-
-    ultra = new  Face(str, 320, 240, 4, 0.65 ); // config model input
-
+    string str = tFaceModelDir + "face_320.mnn";
+    face_detection = new  Face(str, 320, 240, 4, 0.65 ); // config model input
     env->ReleaseStringUTFChars(faceDetectionModelPath_, faceDetectionModelPath);
     detection_sdk_init_ok = true;
     tRet = true;
@@ -62,7 +48,7 @@ Java_com_facesdk_FaceSDKNative_FaceDetectionModelInit(JNIEnv *env, jobject insta
 }
 
 JNIEXPORT jintArray JNICALL
-Java_com_facesdk_FaceSDKNative_FaceDetect(JNIEnv *env, jobject instance, jbyteArray imageDate_,
+Java_com_facesdk_FaceSDKNative_FaceDetection(JNIEnv *env, jobject instance, jbyteArray imageDate_,
                                           jint imageWidth, jint imageHeight, jint imageChannel) {
     if(!detection_sdk_init_ok){
         LOGD("sdk not init");
@@ -92,7 +78,7 @@ Java_com_facesdk_FaceSDKNative_FaceDetect(JNIEnv *env, jobject instance, jbyteAr
     std::vector<FaceInfo> face_info;
     //detect face
     LOGD("imageWidth=%d, imageHeight=%d,imageChannel=%d",imageWidth,imageHeight,imageChannel);
-    ultra ->detect((unsigned char*)imageDate, imageWidth, imageHeight, imageChannel, face_info );
+    face_detection ->detect((unsigned char*)imageDate, imageWidth, imageHeight, imageChannel, face_info );
     int32_t num_face = static_cast<int32_t>(face_info.size());
     int out_size = 1+num_face*4;
     int *allfaceInfo = new int[out_size];
@@ -108,9 +94,42 @@ Java_com_facesdk_FaceSDKNative_FaceDetect(JNIEnv *env, jobject instance, jbyteAr
     env->SetIntArrayRegion(tFaceInfo, 0, out_size, allfaceInfo);
     env->ReleaseByteArrayElements(imageDate_, imageDate, 0);
 
-
     delete [] allfaceInfo;
+    return tFaceInfo;
+}
+JNIEXPORT jfloatArray JNICALL
+Java_com_facesdk_FaceSDKNative_KeyPointDetection(JNIEnv *env, jobject instance, jbyteArray imageDate_,
+                                             jint imageWidth, jint imageHeight, jint imageChannel) {
+    if(!detection_sdk_init_ok){
+        LOGD("sdk not init");
+        return NULL;
+    }
+    int tImageDateLen = env->GetArrayLength(imageDate_);
+    if(imageChannel == tImageDateLen / imageWidth / imageHeight){
+        LOGD("imgW=%d, imgH=%d,imgC=%d",imageWidth,imageHeight,imageChannel);
+    }
+    else{
+        LOGD("img data format error");
+        return NULL;
+    }
+    jbyte *imageDate = env->GetByteArrayElements(imageDate_, NULL);
+    if (NULL == imageDate){
+        LOGD("img data is null");
+        return NULL;
+    }
+    if(imageWidth<24||imageHeight<24){
+        LOGD("img is too small");
+        return NULL;
+    }
+    // detect keypoint
+    LOGD("imageWidth=%d, imageHeight=%d,imageChannel=%d",imageWidth,imageHeight,imageChannel);
+    float* result = face_keyPoint ->detection((unsigned char*)imageDate, imageWidth, imageHeight, imageChannel);
+    int out_size = 196;
+    jfloatArray tFaceInfo = env->NewFloatArray(out_size);
+    env->SetFloatArrayRegion(tFaceInfo, 0, out_size, result);
+    env->ReleaseByteArrayElements(imageDate_, imageDate, 0);
 
+    delete [] result;
     return tFaceInfo;
 }
 
@@ -124,7 +143,7 @@ Java_com_facesdk_FaceSDKNative_FaceDetectionModelUnInit(JNIEnv *env, jobject ins
         return true;
     }
 
-    delete ultra;
+    delete face_detection;
 
     detection_sdk_init_ok = false;
 

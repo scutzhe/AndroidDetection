@@ -1,18 +1,22 @@
 #ifndef Face_hpp
 #define Face_hpp
-
 #pragma once
 
-#include <algorithm>
 #include <iostream>
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <memory>
+#include "Interpreter.hpp"
+#include "MNNDefine.h"
+#include "Tensor.hpp"
+#include "ImageProcess.hpp"
+#include "Matrix.h"
 #include "net.h"
 
 #define num_featuremap 4
 #define hard_nms 1
-#define blending_nms 2 /* mix nms was been proposaled in paper blaze face, aims to minimize the temporal jitter*/
+#define blending_nms 2
 typedef struct FaceInfo {
     float x1;
     float y1;
@@ -25,7 +29,6 @@ typedef struct FaceInfo {
 class Face {
 public:
     Face(std::string &mnn_path, int input_width, int input_length, int num_thread_ = 4, float score_threshold_ = 0.7, float iou_threshold_ = 0.35);
-    //~Face();
     int detect(unsigned char *raw_image, int width, int height, int channel, std::vector<FaceInfo> &face_list);
     void generateBBox(std::vector<FaceInfo> &bbox_collection,  float* scores, float* boxes);
     void nms(std::vector<FaceInfo> &input, std::vector<FaceInfo> &output, int type = blending_nms);
@@ -59,6 +62,26 @@ private:
     std::vector<int> w_h_list;
 
     std::vector<std::vector<float>> priors = {};
+};
+
+class KeyPoint {
+public:
+    KeyPoint(std::string model_path);
+    float * detection(unsigned char *image_data, int width, int height, int channel);
+
+private:
+    std::shared_ptr<MNN::Interpreter>key_interpreter = nullptr;
+    MNN::Session *key_session = nullptr;
+    MNN::CV::ImageProcess::Config image_config;
+    MNN::ScheduleConfig config;
+    MNN::BackendConfig backendConfig;
+
+    int WIDTH = 96;
+    int HEIGHT = 96;
+    int CHANNELS = 3;
+    int THREADS = 4;
+    const float MEAN[3] = {123.0f,123.0f,123.0f};
+    const float NORMALIZATION[3] = {0.017f,0.017f,0.017f};
 };
 
 #endif /* Face_hpp */

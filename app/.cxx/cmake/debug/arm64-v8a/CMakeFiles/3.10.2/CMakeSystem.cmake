@@ -1,6 +1,6 @@
-set(CMAKE_HOST_SYSTEM "Linux-4.15.0-123-generic")
+set(CMAKE_HOST_SYSTEM "Linux-4.15.0-128-generic")
 set(CMAKE_HOST_SYSTEM_NAME "Linux")
-set(CMAKE_HOST_SYSTEM_VERSION "4.15.0-123-generic")
+set(CMAKE_HOST_SYSTEM_VERSION "4.15.0-128-generic")
 set(CMAKE_HOST_SYSTEM_PROCESSOR "x86_64")
 
 include("/home/zhex/Android/android-ndk-r21/build/cmake/android.toolchain.cmake")

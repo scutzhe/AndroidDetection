@@ -232,6 +232,9 @@ Project_BINARY_DIR:STATIC=/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/rele
 Project_SOURCE_DIR:STATIC=/home/zhex/git_me/AndroidDetection/app
 
 //Dependencies for the target
+face_detection_LIB_DEPENDS:STATIC=general;MNN;general;MNN_CL;general;jnigraphics;general;z;general;/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/21/liblog.so;
+
+//Dependencies for the target
 facedetect_LIB_DEPENDS:STATIC=general;MNN;general;MNN_CL;general;jnigraphics;general;z;general;/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/21/liblog.so;
 
 //Path to a library.

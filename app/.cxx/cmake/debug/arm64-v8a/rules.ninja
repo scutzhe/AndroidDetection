@@ -22,7 +22,7 @@ rule CUSTOM_COMMAND
 #############################################
 # Rule for compiling CXX files.
 
-rule CXX_COMPILER__facedetect
+rule CXX_COMPILER__face_detection
   depfile = $DEP_FILE
   deps = gcc
   command = /home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ --target=aarch64-none-linux-android21 --gcc-toolchain=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/sysroot  $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
@@ -32,7 +32,7 @@ rule CXX_COMPILER__facedetect
 #############################################
 # Rule for linking CXX shared library.
 
-rule CXX_SHARED_LIBRARY_LINKER__facedetect
+rule CXX_SHARED_LIBRARY_LINKER__face_detection
   command = $PRE_LINK && /home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ --target=aarch64-none-linux-android21 --gcc-toolchain=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64 --sysroot=/home/zhex/Android/android-ndk-r21/toolchains/llvm/prebuilt/linux-x86_64/sysroot -fPIC $LANGUAGE_COMPILE_FLAGS $ARCH_FLAGS $LINK_FLAGS -shared $SONAME_FLAG$SONAME -o $TARGET_FILE $in $LINK_PATH $LINK_LIBRARIES && $POST_BUILD
   description = Linking CXX shared library $TARGET_FILE
   restat = $RESTAT

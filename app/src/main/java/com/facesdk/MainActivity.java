@@ -10,6 +10,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
@@ -70,27 +71,22 @@ public class MainActivity extends Activity {
         // For API 23+ you need to request the read/write permissions even if they are already in your manifest.
         int currentapiVersion = android.os.Build.VERSION.SDK_INT;
 
-        //if (currentapiVersion >= Build.VERSION_CODES.M) {
+        if (currentapiVersion >= Build.VERSION_CODES.M) {
             verifyPermissions(this);
-        //}
+        }
 
         //copy model
         try {
-            //RFB-320-quant-ADMM-32
             copyBigDataToSD("face_320.mnn");
-            copyBigDataToSD("face_320_quantization_ADMM_32.mnn");
-            copyBigDataToSD("face_320_quantization_KL_5792.mnn");
-            copyBigDataToSD("face_320_simple.mnn");
-            copyBigDataToSD("face_slim_320_quantization_ADMM_50.mnn");
+            copyBigDataToSD("keyPoint_96.mnn");
 
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        File sdDir = Environment.getExternalStorageDirectory();//get model store dir
+        //create model's file store dir
+        File sdDir = Environment.getExternalStorageDirectory();
         String sdPath = sdDir.toString() + "/facesdk/";
         faceSDKNative.FaceDetectionModelInit(sdPath);
-
 
         infoResult = (TextView) findViewById(R.id.infoResult);
         imageView = (ImageView) findViewById(R.id.imageView);
@@ -116,12 +112,13 @@ public class MainActivity extends Activity {
                 byte[] imageDate = getPixelsRGBA(yourSelectedImage);
 
                 long timeDetectFace = System.currentTimeMillis();
-                //do FaceDetect
-                int faceInfo[] =  faceSDKNative.FaceDetect(imageDate, width, height,4);
+                //do
+                int faceInfo[] =  faceSDKNative.FaceDetection(imageDate, width, height,4);
                 timeDetectFace = System.currentTimeMillis() - timeDetectFace;
 
                 //Get Results
-               if (faceInfo.length>1) {
+                Log.i(TAG,"faceInfo.length:"+faceInfo.length);
+                if (faceInfo.length>1) {
                    int faceNum = faceInfo[0];
                    infoResult.setText("detect time："+timeDetectFace+"ms,   face number：" + faceNum);
                    Log.i(TAG, "detect time："+timeDetectFace);
