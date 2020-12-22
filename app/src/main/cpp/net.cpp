@@ -1,9 +1,8 @@
 #include "net.h"
 #define TAG "net"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
-Inference_engine::Inference_engine()
-{ }
 
+Inference_engine::Inference_engine(){ }
 Inference_engine::~Inference_engine()
 { 
     if ( netPtr != NULL )
@@ -30,7 +29,6 @@ int Inference_engine::load_param(std::string & file, int num_thread)
             if (nullptr == netPtr) return -1;
 
             MNN::ScheduleConfig sch_config;
-//            sch_config.type = (MNNForwardType)MNN_FORWARD_OPENCL;
             sch_config.type = (MNNForwardType)MNN_FORWARD_CPU;
             if ( num_thread > 0 )sch_config.numThread = num_thread;
 
@@ -47,7 +45,6 @@ int Inference_engine::load_param(std::string & file, int num_thread)
             return -1;
         }
     }
-
     return 0;
 }
 
@@ -55,18 +52,15 @@ int Inference_engine::set_params(int srcType, int dstType,float *mean, float *sc
 {
     config.destFormat   = (MNN::CV::ImageFormat)dstType;
     config.sourceFormat = (MNN::CV::ImageFormat)srcType;
-
     ::memcpy(config.mean,   mean,   3 * sizeof(float));
     ::memcpy(config.normal, scale,  3 * sizeof(float));
-
     config.filterType = (MNN::CV::Filter)(1);
     config.wrap = (MNN::CV::Wrap)(2);
-
     return 0;
 }
 
-// infer
-int Inference_engine::infer_img(unsigned char *data, int width, int height, int channel, int dstw, int dsth, Inference_engine_tensor& out)
+// inference
+int Inference_engine::inference(unsigned char *data, int width, int height, int channel, int dstw, int dsth, Inference_engine_tensor& out)
 {
     MNN::Tensor* tensorPtr = netPtr->getSessionInput(sessionPtr, nullptr);
     MNN::CV::Matrix transform;
@@ -107,6 +101,5 @@ int Inference_engine::infer_img(unsigned char *data, int width, int height, int 
         ::memcpy(destPtr.get(), tensorOutPtr->host<float>(), size * sizeof(float));
         out.out_feat.push_back(destPtr);
     }
-
     return 0;
 }

@@ -23,18 +23,17 @@ typedef struct FaceInfo {
     float x2;
     float y2;
     float score;
-
 } FaceInfo;
 
 class Face {
 public:
     Face(std::string &mnn_path, int input_width, int input_length, int num_thread_ = 4, float score_threshold_ = 0.7, float iou_threshold_ = 0.35);
-    int detect(unsigned char *raw_image, int width, int height, int channel, std::vector<FaceInfo> &face_list);
+    std::vector<FaceInfo> detection(unsigned char *raw_image, int width, int height, int channel);
     void generateBBox(std::vector<FaceInfo> &bbox_collection,  float* scores, float* boxes);
     void nms(std::vector<FaceInfo> &input, std::vector<FaceInfo> &output, int type = blending_nms);
 
 private:
-    Inference_engine ultra_net;
+    Inference_engine Face_net;
     int num_thread;
     int image_w;
     int image_h;
@@ -46,16 +45,16 @@ private:
     float score_threshold;
     float iou_threshold;
 
-    float mean_vals[3] = {127, 127, 127};
-    float norm_vals[3] = {1.0 / 128, 1.0 / 128, 1.0 / 128};
+    float mean_vals[3] = {127.0f, 127.0f, 127.0f};
+    float norm_vals[3] = {1.0 / 128.0f, 1.0 / 128.0f, 1.0 / 128.0f};
 
     const float center_variance = 0.1;
     const float size_variance = 0.2;
     const std::vector<std::vector<float>> min_boxes = {
-            {10.0f,  16.0f,  24.0f},
-            {32.0f,  48.0f},
-            {64.0f,  96.0f},
-            {128.0f, 192.0f, 256.0f}};
+                        {10.0f,  16.0f,  24.0f},
+                        {32.0f,  48.0f},
+                        {64.0f,  96.0f},
+                        {128.0f, 192.0f, 256.0f}};
     const std::vector<float> strides = {8.0, 16.0, 32.0, 64.0};
     std::vector<std::vector<float>> featuremap_size;
     std::vector<std::vector<float>> shrinkage_size;
@@ -81,7 +80,6 @@ private:
     int CHANNELS = 3;
     int THREADS = 4;
     const float MEAN[3] = {123.0f,123.0f,123.0f};
-    const float NORMALIZATION[3] = {0.017f,0.017f,0.017f};
+    const float NORMALIZATION[3] = {1.0 / 58.0f,1.0 / 58.0f , 1.0 / 58.0f};
 };
-
 #endif /* Face_hpp */

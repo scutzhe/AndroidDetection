@@ -29,16 +29,16 @@ Face::Face(std::string &mnn_path,
     }
     /* generate prior anchors */
     for (int index = 0; index < num_featuremap; index++) {
-        float scale_w = in_w / shrinkage_size[0][index];
-        float scale_h = in_h / shrinkage_size[1][index];
-        for (int j = 0; j < featuremap_size[1][index]; j++) {
-            for (int i = 0; i < featuremap_size[0][index]; i++) {
-                float x_center = (i + 0.5) / scale_w;
-                float y_center = (j + 0.5) / scale_h;
+        float scale_w = (float)in_w / shrinkage_size[0][index];
+        float scale_h = (float)in_h / shrinkage_size[1][index];
+        for (auto j = 0; j < featuremap_size[1][index]; j++) {
+            for (auto i = 0; i < featuremap_size[0][index]; i++) {
+                float x_center = (float)(i + 0.5) / scale_w;
+                float y_center = (float)(j + 0.5) / scale_h;
 
                 for (float k : min_boxes[index]) {
-                    float w = k / in_w;
-                    float h = k / in_h;
+                    float w = k / (float)in_w;
+                    float h = k / (float)in_h;
                     priors.push_back({clip(x_center, 1), clip(y_center, 1), clip(w, 1), clip(h, 1)});
                 }
             }
@@ -46,24 +46,26 @@ Face::Face(std::string &mnn_path,
     }
     /* generate prior anchors finished */
     num_anchors = priors.size();
-    ultra_net.load_param(mnn_path, num_thread);
-    ultra_net.set_params(0, 1, mean_vals, norm_vals);
+    Face_net.load_param(mnn_path, num_thread);
+    Face_net.set_params(0, 1, mean_vals, norm_vals);
 }
 
-int Face::detect(unsigned char *data, int width, int height, int channel, std::vector<FaceInfo> &face_list ) {
+std::vector<FaceInfo> Face::detection(unsigned char *data, int width, int height, int channel) {
+    std::vector<FaceInfo> box_collection;
+    std::vector<FaceInfo> face_list;
     image_h = height;
     image_w = width;
-    Inference_engine_tensor  out;
+    Inference_engine_tensor out;
     string scores = "scores";
     out.add_name(scores);
     string boxes = "boxes";
     out.add_name(boxes);
     LOGD("in_w=%d,in_h=%d",in_w,in_h);
-    ultra_net.infer_img(data, width, height, channel, in_w, in_h, out);
-    std::vector<FaceInfo> bbox_collection;
-    generateBBox(bbox_collection, out.score(0).get() , out.score(1).get());
-    nms(bbox_collection, face_list);
-    return 0;
+    Face_net.inference(data, width, height, channel, in_w, in_h, out);
+    generateBBox(box_collection, out.score(0).get() , out.score(1).get());
+    nms(box_collection, face_list);
+
+    return face_list;
 }
 
 void Face::generateBBox(std::vector<FaceInfo> &bbox_collection, float* scores, float* boxes) {
