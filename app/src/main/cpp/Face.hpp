@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <cstring>
+#include <ctime>
 #include "Interpreter.hpp"
 #include "MNNDefine.h"
 #include "Tensor.hpp"
@@ -27,12 +29,15 @@ typedef struct FaceInfo {
 
 class Face {
 public:
-    Face(std::string &mnn_path, int input_width, int input_length, int num_thread_ = 4, float score_threshold_ = 0.7, float iou_threshold_ = 0.35);
-    std::vector<FaceInfo> detection(unsigned char *raw_image, int width, int height, int channel);
+    Face(std::string &detection_mnn_path, std::string &keyPoint_mnn_path, int input_width, int input_length, int num_thread_ = 4, float score_threshold_ = 0.7, float iou_threshold_ = 0.35);
+    std::vector<FaceInfo> face_detection(unsigned char *raw_image, int width, int height, int channel);
+    float * keyPoint_detection(unsigned char *image_data, int width, int height, int channel);
+    void transform_buffer(unsigned char *data, unsigned char* data_crop, int x_min, int y_min, int crop_width, int crop_height, int width, int channel);
     void generateBBox(std::vector<FaceInfo> &bbox_collection,  float* scores, float* boxes);
     void nms(std::vector<FaceInfo> &input, std::vector<FaceInfo> &output, int type = blending_nms);
-
+    void Delay(int  time);
 private:
+    //face detection
     Inference_engine Face_net;
     int num_thread;
     int image_w;
@@ -59,16 +64,9 @@ private:
     std::vector<std::vector<float>> featuremap_size;
     std::vector<std::vector<float>> shrinkage_size;
     std::vector<int> w_h_list;
-
     std::vector<std::vector<float>> priors = {};
-};
 
-class KeyPoint {
-public:
-    KeyPoint(std::string model_path);
-    float * detection(unsigned char *image_data, int width, int height, int channel);
-
-private:
+    // keyPoint detection
     std::shared_ptr<MNN::Interpreter>key_interpreter = nullptr;
     MNN::Session *key_session = nullptr;
     MNN::CV::ImageProcess::Config image_config;
@@ -82,4 +80,4 @@ private:
     const float MEAN[3] = {123.0f,123.0f,123.0f};
     const float NORMALIZATION[3] = {1.0 / 58.0f,1.0 / 58.0f , 1.0 / 58.0f};
 };
-#endif /* Face_hpp */
+#endif /*Face_hpp*/

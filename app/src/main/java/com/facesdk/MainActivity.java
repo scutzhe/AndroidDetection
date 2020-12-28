@@ -29,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Locale;
 
 import static android.content.ContentValues.TAG;
 
@@ -109,20 +110,28 @@ public class MainActivity extends Activity {
                     return;
                 int width = yourSelectedImage.getWidth();
                 int height = yourSelectedImage.getHeight();
-                byte[] imageDate = getPixelsRGBA(yourSelectedImage);
+                byte[] imageData = getPixelsRGBA(yourSelectedImage);
+//                Log.i(TAG,"imageData.length:"+imageData.length);
+//                for(int i=0;i<imageData.length;i++){
+//                    Log.i(TAG,"index"+ i + ":" + imageData[i]);
+////                    Log.i(TAG, "imageData:"+imageData[i]);
+//                }
 
                 long timeDetectFace = System.currentTimeMillis();
-                //do
-                int faceInfo[] =  faceSDKNative.FaceDetection(imageDate, width, height,4);
+
+                //start face_detection
+                int faceInfo[] =  faceSDKNative.FaceDetection(imageData, width, height,4);
+                // keyPoint detection
+
                 timeDetectFace = System.currentTimeMillis() - timeDetectFace;
 
                 //Get Results
                 Log.i(TAG,"faceInfo.length:"+faceInfo.length);
                 if (faceInfo.length>1) {
                    int faceNum = faceInfo[0];
-                   infoResult.setText("detect time："+timeDetectFace+"ms,   face number：" + faceNum);
-                   Log.i(TAG, "detect time："+timeDetectFace);
-                   Log.i(TAG, "face num：" + faceNum );
+//                   infoResult.setText("detection time："+timeDetectFace+"ms,   face number：" + faceNum);
+//                   Log.i(TAG, "detection time："+timeDetectFace);
+//                   Log.i(TAG, "face's num：" + faceNum );
 
                    Bitmap drawBitmap = yourSelectedImage.copy(Bitmap.Config.ARGB_8888, true);
                    for (int i=0; i<faceNum; i++) {
@@ -133,6 +142,18 @@ public class MainActivity extends Activity {
                        top = faceInfo[2+4*i];
                        right = faceInfo[3+4*i];
                        bottom = faceInfo[4+4*i];
+                       int cropWidth = right - left;
+                       int cropHeight = bottom - top;
+                       Bitmap cropBitmap = Bitmap.createBitmap(drawBitmap,left,top,cropWidth,cropHeight,null,false);
+                       byte[] cropImageData = getPixelsRGBA(cropBitmap);
+                       float faceKeyPoint[] = faceSDKNative.KeyPointDetection(cropImageData,cropWidth,cropHeight,4);
+                       for(int j=0;i<98;i++){
+                           float x = faceKeyPoint[j*2];
+                           float y = faceKeyPoint[j*2 + 1];
+                           int x_ = Math.round(x / 96  * width) ;
+                           int y_ = Math.round(y / 96 * height);
+                           Log.i(TAG,"x_,y_:"+x_+","+y_);
+                       }
                        paint.setColor(Color.RED);
                        paint.setStyle(Paint.Style.STROKE);
                        paint.setStrokeWidth(5);

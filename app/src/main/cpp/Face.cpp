@@ -5,10 +5,10 @@
 
 using namespace std;
 
-// face detection
-Face::Face(std::string &mnn_path,
+Face::Face(std::string &detection_mnn_path,std::string &keyPoint_mnn_path,
            int input_width, int input_length, int num_thread_,
            float score_threshold_, float iou_threshold_) {
+    // face detection
     num_thread = num_thread_;
     score_threshold = score_threshold_;
     iou_threshold = iou_threshold_;
@@ -46,26 +46,103 @@ Face::Face(std::string &mnn_path,
     }
     /* generate prior anchors finished */
     num_anchors = priors.size();
-    Face_net.load_param(mnn_path, num_thread);
+    Face_net.load_param(detection_mnn_path, num_thread);
     Face_net.set_params(0, 1, mean_vals, norm_vals);
+
+    // keyPoint detection
+    key_interpreter = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromFile(keyPoint_mnn_path.c_str()));
+    config.type = static_cast<MNNForwardType>(MNN_FORWARD_CPU);
+    config.numThread = THREADS;
+    backendConfig.precision = (MNN::BackendConfig::PrecisionMode)0;
+    config.backendConfig = &backendConfig;
+    key_session = key_interpreter->createSession(config);
+
+    //image_configuration
+    image_config.sourceFormat = (MNN::CV::ImageFormat)0;//RGBA
+    image_config.destFormat = (MNN::CV::ImageFormat)2;//BGR
+    ::memcpy(image_config.mean, MEAN, sizeof(MEAN));
+    ::memcpy(image_config.normal, NORMALIZATION, sizeof(NORMALIZATION));
 }
 
-std::vector<FaceInfo> Face::detection(unsigned char *data, int width, int height, int channel) {
+void Face:: Delay(int   time)
+{
+    clock_t  now = clock();
+    while(clock() - now < time   );
+}
+
+std::vector<FaceInfo> Face::face_detection(unsigned char *data, int width, int height, int channel) {
+//    for(int i=0;i<80*640;i++){
+//        LOGD("data[i=%d]=%d",i,data[i]);
+//        Delay(10);
+//    }
     std::vector<FaceInfo> box_collection;
     std::vector<FaceInfo> face_list;
     image_h = height;
     image_w = width;
     Inference_engine_tensor out;
-    string scores = "scores";
+    std::string scores = "scores";
     out.add_name(scores);
-    string boxes = "boxes";
+    std::string boxes = "boxes";
     out.add_name(boxes);
     LOGD("in_w=%d,in_h=%d",in_w,in_h);
     Face_net.inference(data, width, height, channel, in_w, in_h, out);
     generateBBox(box_collection, out.score(0).get() , out.score(1).get());
     nms(box_collection, face_list);
-
+//    for(int i =0;i<face_list.size();i++){
+//        LOGD("x1=%d,y1=%d,x2=%d,y2=%d",(int)face_list[i].x1,(int)face_list[i].y1,(int)face_list[i].x2,(int)face_list[i].y2);
+//        int x_min = (int)face_list[i].x1 - 10;
+//        int y_min = (int)face_list[i].y1 - 10;
+//        int x_max = (int)face_list[i].x2 + 10;
+//        int y_max = (int)face_list[i].y2 + 10;
+//        if(x_min < 0) x_min = 0;
+//        if(y_min < 0) y_min = 0;
+//        if(x_max > width) x_max = width;
+//        if(y_max > height) y_max = height;
+//        LOGD("x_min=%d,y_min=%d,x_max=%d,y_max=%d",x_min,y_min,x_max,y_max);
+//        int width_buffer = x_max - x_min;
+//        int height_buffer = y_max - y_min;
+//        unsigned char* data_crop = (unsigned char *)malloc( width_buffer * height_buffer * channel * sizeof(unsigned char));
+//        transform_buffer(data,data_crop,x_min,y_min,width_buffer,height_buffer,width,channel);
+//
+//        auto landmarks = keyPoint_detection(data_crop,width_buffer,height_buffer,channel);
+//        for(int i=0;i<98;i++){
+//            float x = landmarks[i*2] / 96 * width_buffer;
+//            float y = landmarks[i*2 + 1] / 96 * height_buffer;
+//            LOGD("index=%d,x=%d,y=%d",i,x,y);
+//        }
+//        free(data_crop);
+//    }
     return face_list;
+}
+
+// buffer crop operation
+void Face::transform_buffer(unsigned char *data,unsigned char* data_crop, int x_min,int y_min, int crop_width, int crop_height, int width, int channel){
+    LOGD("channel=%d",channel);
+    for(int i=0;i<crop_height;++i){
+        memcpy(&data_crop[(i * crop_width) * channel], &data[((i + y_min) * width + x_min) * channel],crop_width * channel);
+    }
+}
+
+float* Face:: keyPoint_detection(unsigned char *image_data, int width, int height, int channel){
+    MNN::Tensor* input_tensor = key_interpreter->getSessionInput(key_session, nullptr);
+    MNN::CV::Matrix transform;
+    std::vector<int>dims = { 1, CHANNELS, HEIGHT, WIDTH };
+    key_interpreter->resizeTensor(input_tensor, dims);
+    key_interpreter->resizeSession(key_session);
+    transform.postScale(1.0f/(float)HEIGHT, 1.0f/(float)WIDTH);
+    transform.postScale((float)width, (float)height);
+    std::unique_ptr<MNN::CV::ImageProcess> process(MNN::CV::ImageProcess::create(
+            image_config.sourceFormat, image_config.destFormat, image_config.mean,
+            3, image_config.normal, 3));
+    process->setMatrix(transform);
+    process->convert(image_data, width, height, width*channel, input_tensor);
+    key_interpreter->runSession(key_session);
+    std::string output_tensor_name = "conv8_fwd";
+    MNN::Tensor *tensor_landmarks  = key_interpreter->getSessionOutput(key_session, output_tensor_name.c_str());
+    MNN::Tensor tensor_landmarks_host(tensor_landmarks, tensor_landmarks->getDimensionType());
+    tensor_landmarks->copyToHostTensor(&tensor_landmarks_host);
+    auto landmarks_data  = tensor_landmarks_host.host<float>();
+    return landmarks_data;
 }
 
 void Face::generateBBox(std::vector<FaceInfo> &bbox_collection, float* scores, float* boxes) {
@@ -161,43 +238,4 @@ void Face::nms(std::vector<FaceInfo> &input, std::vector<FaceInfo> &output, int 
             }
         }
     }
-}
-
-// face keyPoint detection
-KeyPoint::KeyPoint(std::string mnn_path){
-    //model_configuration
-    key_interpreter = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromFile(mnn_path.c_str()));
-    config.type = static_cast<MNNForwardType>(MNN_FORWARD_CPU);
-    config.numThread = THREADS;
-    backendConfig.precision = (MNN::BackendConfig::PrecisionMode)0;
-    config.backendConfig = &backendConfig;
-    key_session = key_interpreter->createSession(config);
-
-    //image_configuration
-    image_config.sourceFormat = (MNN::CV::ImageFormat)0;//RGBA
-    image_config.destFormat = (MNN::CV::ImageFormat)2;//BGR
-    ::memcpy(image_config.mean, MEAN, sizeof(MEAN));
-    ::memcpy(image_config.normal, NORMALIZATION, sizeof(NORMALIZATION));
-}
-
-float* KeyPoint:: detection(unsigned char *image_data, int width, int height, int channel) {
-    MNN::Tensor* input_tensor = key_interpreter->getSessionInput(key_session, nullptr);
-    MNN::CV::Matrix transform;
-    std::vector<int>dims = { 1, CHANNELS, HEIGHT, WIDTH };
-    key_interpreter->resizeTensor(input_tensor, dims);
-    key_interpreter->resizeSession(key_session);
-    transform.postScale(1.0f/(float)HEIGHT, 1.0f/(float)WIDTH);
-    transform.postScale((float)width, (float)height);
-    std::unique_ptr<MNN::CV::ImageProcess> process(MNN::CV::ImageProcess::create(
-            image_config.sourceFormat, image_config.destFormat, image_config.mean,
-            3, image_config.normal, 3));
-    process->setMatrix(transform);
-    process->convert(image_data, width, height, width*channel, input_tensor);
-    key_interpreter->runSession(key_session);
-    std::string output_tensor_name = "conv8_fwd";
-    MNN::Tensor *tensor_landmarks  = key_interpreter->getSessionOutput(key_session, output_tensor_name.c_str());
-    MNN::Tensor tensor_landmarks_host(tensor_landmarks, tensor_landmarks->getDimensionType());
-    tensor_landmarks->copyToHostTensor(&tensor_landmarks_host);
-    auto landmarks_data  = tensor_landmarks_host.host<float>();
-    return landmarks_data;
 }

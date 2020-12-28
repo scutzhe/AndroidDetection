@@ -7,6 +7,9 @@ public class FaceSDKNative {
     //SDK人脸检测接口
     public native int[] FaceDetection(byte[] imageDate, int imageWidth , int imageHeight, int imageChannel);
 
+    //SDK人脸关键点接口
+    public native float[] KeyPointDetection(byte[] imageDate, int imageWidth , int imageHeight, int imageChannel);
+
     //SDK销毁
     public native boolean FaceDetectionModelUnInit();
 
