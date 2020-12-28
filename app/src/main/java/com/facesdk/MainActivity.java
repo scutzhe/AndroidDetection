@@ -147,11 +147,12 @@ public class MainActivity extends Activity {
                        Bitmap cropBitmap = Bitmap.createBitmap(drawBitmap,left,top,cropWidth,cropHeight,null,false);
                        byte[] cropImageData = getPixelsRGBA(cropBitmap);
                        float faceKeyPoint[] = faceSDKNative.KeyPointDetection(cropImageData,cropWidth,cropHeight,4);
-                       for(int j=0;i<98;i++){
+                       for(int j=0;j<98;i++){
                            float x = faceKeyPoint[j*2];
                            float y = faceKeyPoint[j*2 + 1];
-                           int x_ = Math.round(x / 96  * width) ;
-                           int y_ = Math.round(y / 96 * height);
+                           // add face offset
+                           int x_ = Math.round(x / 96  * width) + left ;
+                           int y_ = Math.round(y / 96 * height) + top;
                            Log.i(TAG,"x_,y_:"+x_+","+y_);
                        }
                        paint.setColor(Color.RED);
