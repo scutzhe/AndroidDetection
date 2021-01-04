@@ -10,6 +10,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.net.Uri;
+import android.nfc.Tag;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -89,6 +90,20 @@ public class MainActivity extends Activity {
         String sdPath = sdDir.toString() + "/facesdk/";
         faceSDKNative.FaceDetectionModelInit(sdPath);
 
+        //save picture
+        String imageDir = sdDir.toString() + "/facesdk/images";
+        File file = new File(imageDir);
+        if(!file.exists()){
+            file.mkdir();
+        }
+        Log.i(TAG,"imageDir:"+imageDir);
+        File[] fs = file.listFiles();
+        if(fs.length !=0){
+            for(File f:fs){
+                String imagePath = f.getAbsolutePath();
+                Log.i(TAG,"imagePath:"+imagePath);
+            }
+        }
         infoResult = (TextView) findViewById(R.id.infoResult);
         imageView = (ImageView) findViewById(R.id.imageView);
 
@@ -101,7 +116,6 @@ public class MainActivity extends Activity {
                 startActivityForResult(i, SELECT_IMAGE);
             }
         });
-
         Button buttonDetect = (Button) findViewById(R.id.buttonDetect);
         buttonDetect.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -147,14 +161,16 @@ public class MainActivity extends Activity {
                        Bitmap cropBitmap = Bitmap.createBitmap(drawBitmap,left,top,cropWidth,cropHeight,null,false);
                        byte[] cropImageData = getPixelsRGBA(cropBitmap);
                        float faceKeyPoint[] = faceSDKNative.KeyPointDetection(cropImageData,cropWidth,cropHeight,4);
-                       for(int j=0;j<98;i++){
-                           float x = faceKeyPoint[j*2];
-                           float y = faceKeyPoint[j*2 + 1];
-                           // add face offset
-                           int x_ = Math.round(x / 96  * width) + left ;
-                           int y_ = Math.round(y / 96 * height) + top;
-                           Log.i(TAG,"x_,y_:"+x_+","+y_);
-                       }
+//                       for(int j=0;j<98;i++){
+//                           float x = faceKeyPoint[j*2];
+//                           float y = faceKeyPoint[j*2 + 1];
+//                           // add face offset
+//                           int x_ = Math.round(x / 96  * width) + left ;
+//                           int y_ = Math.round(y / 96 * height) + top;
+//                           Log.i(TAG,"x_,y_:"+x_+","+y_);
+//                       }
+                       Log.i(TAG,"length:"+faceKeyPoint.length);
+                       Log.i(TAG,"detection");
                        paint.setColor(Color.RED);
                        paint.setStyle(Paint.Style.STROKE);
                        paint.setStrokeWidth(5);

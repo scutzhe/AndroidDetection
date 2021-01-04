@@ -79,7 +79,7 @@ Java_com_facesdk_FaceSDKNative_FaceDetection(JNIEnv *env, jobject instance, jbyt
     LOGD("imageWidth=%d, imageHeight=%d,imageChannel=%d",imageWidth,imageHeight,imageChannel);
     std::vector<FaceInfo> face_information = face_detection ->face_detection((unsigned char*)imageDate, imageWidth, imageHeight, imageChannel);
     int32_t num_face = static_cast<int32_t>(face_information.size());
-    int out_size = 1+num_face*4;
+    int out_size = 1+num_face*4;"
     int *face_box = new int[out_size];
     face_box[0] = num_face;
     for (int i=0; i<num_face; i++) {
@@ -129,7 +129,6 @@ Java_com_facesdk_FaceSDKNative_KeyPointDetection(JNIEnv *env, jobject instance, 
     env->SetFloatArrayRegion(tFaceKeyPointInfo, 0, out_size, result);
     env->ReleaseByteArrayElements(imageDate_, imageDate, 0);
 
-    delete [] result;
     return tFaceKeyPointInfo;
 }
 
