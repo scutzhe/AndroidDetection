@@ -29,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.lang.Math;
 
 import static android.content.ContentValues.TAG;
 
@@ -75,7 +76,9 @@ public class MainActivity extends Activity {
 
         //copy model
         try {
-            copyBigDataToSD("face_keypoint_0524.mnn");
+//            copyBigDataToSD("face_keypoint_0524.mnn");
+            copyBigDataToSD("nme_min_aug_vulkan.mnn");
+//            copyBigDataToSD("nme_min_aug_cpu.mnn");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -125,15 +128,18 @@ public class MainActivity extends Activity {
                    paint.setStyle(Paint.Style.STROKE);
                    paint.setStrokeWidth(5);
                    //Draw rect
-                   float x = faceKeyPoint[i*2];
-                   float y = faceKeyPoint[i*2 + 1];
-                   int x_ = Math.round(x / 96  * width) ;
-                   int y_ = Math.round(y / 96 * height);
-                   Log.i(TAG,"x_,y_:"+x_+","+y_);
-//                   canvas.drawCircle(x,y,0.1f, paint);
-                   canvas.drawCircle(x_,y_,0.1f, paint);
+                   float x = faceKeyPoint[i*2] * 112;
+                   float y = faceKeyPoint[i*2 + 1] * 112;
+//                   int x_ = Math.round(x / 96  * width) ;
+//                   int y_ = Math.round(y / 96 * height);
+                   Log.i(TAG,"x,y:"+x+","+y);
+//                   canvas.drawCircle(x_,y_,0.1f, paint);
+                   canvas.drawCircle(x,y,0.1f, paint);
                }
-               imageView.setImageBitmap(drawBitmap);
+                Log.i(TAG,"yaw,pitch,roll:"+faceKeyPoint[196] * 180 /Math.PI +","
+                        +faceKeyPoint[197] * 180 / Math.PI+","
+                        +faceKeyPoint[198]* 180 / Math.PI);
+                imageView.setImageBitmap(drawBitmap);
             }
         });
         // ATTENTION: This was auto-generated to implement the App Indexing API.
