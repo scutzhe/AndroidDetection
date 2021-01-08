@@ -32,7 +32,9 @@ Java_com_facesdk_FaceSDKNative_FaceDetectionModelInit(JNIEnv *env, jobject insta
     string tFaceModelDir = faceDetectionModelPath;
     string tLastChar = tFaceModelDir.substr(tFaceModelDir.length()-1, 1);
 //    string model_path = tFaceModelDir + "face_keypoint_0524.mnn";
-    string model_path = tFaceModelDir + "nme_min_aug_vulkan.mnn";
+//    string model_path = tFaceModelDir + "nme_min_aug_vulkan.mnn";
+//    string model_path = tFaceModelDir + "ssd_mobilenetv2_face.mnn";
+    string model_path = tFaceModelDir + "ssd_mobilenetv2_face_vulkan.mnn";
 //    string model_path = tFaceModelDir + "nme_min_aug_cpu.mnn";
     face_keypoint = new  Face(model_path);
     env->ReleaseStringUTFChars(faceDetectionModelPath_, faceDetectionModelPath);
@@ -69,7 +71,7 @@ Java_com_facesdk_FaceSDKNative_FaceDetection(JNIEnv *env, jobject instance, jbyt
     //detect face
     LOGD("imageWidth=%d, imageHeight=%d,imageChannel=%d",imageWidth,imageHeight,imageChannel);
     float* result = face_keypoint ->detection((unsigned char*)imageDate, imageWidth, imageHeight, imageChannel);
-    int out_size = 199;
+    int out_size = 50;
     jfloatArray tFaceInfo = env->NewFloatArray(out_size);
     env->SetFloatArrayRegion(tFaceInfo, 0, out_size, result);
     env->ReleaseByteArrayElements(imageDate_, imageDate, 0);

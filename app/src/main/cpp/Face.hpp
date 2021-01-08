@@ -29,14 +29,16 @@ private:
     MNN::ScheduleConfig config;
     MNN::BackendConfig backendConfig;
 
-    int WIDTH = 112;
-    int HEIGHT = 112;
+    int WIDTH = 320;
+    int HEIGHT = 240;
     int CHANNELS = 3;
-    int THREADS = 4;
+    int THREADS = 2;
 //    const float MEAN[3] = {123.0f,123.0f,123.0f};
 //    const float NORMALIZATION[3] = {58.0f,58.0f,58.0f};
     const float MEAN[3] = {0.0f,0.0f,0.0f};
     const float NORMALIZATION[3] = {0.003921569f,0.003921569f,0.003921569f};
+
+
 };
 
 #endif /* Face_hpp */
