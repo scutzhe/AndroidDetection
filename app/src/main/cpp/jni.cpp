@@ -5,7 +5,7 @@
 #include <vector>
 #include "Face.hpp"
 
-static Face *face_keypoint;
+static Face *face_detection;
 bool detection_sdk_init_ok = false;
 
 extern "C" {
@@ -33,7 +33,7 @@ Java_com_facesdk_FaceSDKNative_FaceDetectionModelInit(JNIEnv *env, jobject insta
     string tLastChar = tFaceModelDir.substr(tFaceModelDir.length()-1, 1);
 //    string model_path = tFaceModelDir + "face.mnn";
     string model_path = tFaceModelDir + "face_quant.mnn";
-    face_keypoint = new  Face(model_path);
+    face_detection = new  Face(model_path);
     env->ReleaseStringUTFChars(faceDetectionModelPath_, faceDetectionModelPath);
     detection_sdk_init_ok = true;
     tRet = true;
@@ -60,19 +60,18 @@ Java_com_facesdk_FaceSDKNative_FaceDetection(JNIEnv *env, jobject instance, jbyt
         LOGD("img data is null");
         return NULL;
     }
-    if(imageWidth<24||imageHeight<24){
+    if(imageWidth<96||imageHeight<96){
         LOGD("img is too small");
         return NULL;
     }
 
     //detect face
     LOGD("imageWidth=%d, imageHeight=%d,imageChannel=%d",imageWidth,imageHeight,imageChannel);
-    float* result = face_keypoint ->detection((unsigned char*)imageDate, imageWidth, imageHeight, imageChannel);
+    float* result = face_detection ->detection((unsigned char*)imageDate, imageWidth, imageHeight, imageChannel);
     int out_size = 5 * sizeof(result)/sizeof(result[0]);
     jfloatArray tFaceInfo = env->NewFloatArray(out_size);
     env->SetFloatArrayRegion(tFaceInfo, 0, out_size, result);
     env->ReleaseByteArrayElements(imageDate_, imageDate, 0);
-
 //    delete [] result;
     return tFaceInfo;
 }
@@ -84,7 +83,7 @@ Java_com_facesdk_FaceSDKNative_FaceDetectionModelUnInit(JNIEnv *env, jobject ins
         LOGD("sdk not init, do nothing");
         return true;
     }
-    delete face_keypoint;
+    delete face_detection;
     detection_sdk_init_ok = false;
     tDetectionUnInit = true;
     LOGD("sdk release ok");

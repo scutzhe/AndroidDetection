@@ -35,8 +35,8 @@ public:
     float* detection(unsigned char *image_data, int width, int height, int channel);
 
 private:
-    std::shared_ptr<MNN::Interpreter>key_interpreter = nullptr;
-    MNN::Session *key_session = nullptr;
+    std::shared_ptr<MNN::Interpreter>face_interpreter = nullptr;
+    MNN::Session *face_session = nullptr;
     MNN::CV::ImageProcess::Config image_config;
     MNN::ScheduleConfig config;
     MNN::BackendConfig backendConfig;

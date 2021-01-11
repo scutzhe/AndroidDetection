@@ -2,12 +2,12 @@
 
 Face::Face(std::string mnn_path){
     //model_configuration
-    key_interpreter = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromFile(mnn_path.c_str()));
+    face_interpreter = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromFile(mnn_path.c_str()));
     config.type = static_cast<MNNForwardType>(MNN_FORWARD_CPU);
     config.numThread = THREADS;
     backendConfig.precision = (MNN::BackendConfig::PrecisionMode)0;
     config.backendConfig = &backendConfig;
-    key_session = key_interpreter->createSession(config);
+    face_session = face_interpreter->createSession(config);
 
     //image_configuration
     image_config.sourceFormat = (MNN::CV::ImageFormat)0;//RGBA
@@ -57,11 +57,11 @@ std::vector<FaceInfo> Face::NMS(std::vector<FaceInfo> boxes, float threshold) {
     return res;
 }
 float* Face:: detection(unsigned char *image_data, int width, int height, int channel) {
-    MNN::Tensor* input_tensor = key_interpreter->getSessionInput(key_session, nullptr);
+    MNN::Tensor* input_tensor = face_interpreter->getSessionInput(face_session, nullptr);
     MNN::CV::Matrix transform;
     std::vector<int>dims = { 1, CHANNELS, HEIGHT, WIDTH };
-    key_interpreter->resizeTensor(input_tensor, dims);
-    key_interpreter->resizeSession(key_session);
+    face_interpreter->resizeTensor(input_tensor, dims);
+    face_interpreter->resizeSession(face_session);
     transform.postScale(1.0f/(float)width, 1.0f/(float)height);
     transform.postScale((float)width, (float)height);
     std::unique_ptr<MNN::CV::ImageProcess> process(MNN::CV::ImageProcess::create(
@@ -69,22 +69,22 @@ float* Face:: detection(unsigned char *image_data, int width, int height, int ch
             3, image_config.normal, 3));
     process->setMatrix(transform);
     process->convert(image_data, width, height, width*channel, input_tensor);
-    key_interpreter->runSession(key_session);
+    face_interpreter->runSession(face_session);
     std::string boxes = "Squeeze";
     std::string scores = "convert_scores";
     std::string anchors = "anchors";
 
-    MNN::Tensor *tensor_boxes  = key_interpreter->getSessionOutput(key_session, boxes.c_str());
+    MNN::Tensor *tensor_boxes  = face_interpreter->getSessionOutput(face_session, boxes.c_str());
     MNN::Tensor tensor_boxes_host(tensor_boxes, tensor_boxes->getDimensionType());
     tensor_boxes->copyToHostTensor(&tensor_boxes_host);
     auto boxes_data  = tensor_boxes_host.host<float>();
 
-    MNN::Tensor *tensor_scores  = key_interpreter->getSessionOutput(key_session, scores.c_str());
+    MNN::Tensor *tensor_scores  = face_interpreter->getSessionOutput(face_session, scores.c_str());
     MNN::Tensor tensor_scores_host(tensor_scores, tensor_scores->getDimensionType());
     tensor_scores->copyToHostTensor(&tensor_scores_host);
     auto scores_data  = tensor_scores_host.host<float>();
 
-    MNN::Tensor *tensor_anchors  = key_interpreter->getSessionOutput(key_session,anchors.c_str());
+    MNN::Tensor *tensor_anchors  = face_interpreter->getSessionOutput(face_session,anchors.c_str());
     MNN::Tensor tensor_anchors_host(tensor_anchors, tensor_anchors->getDimensionType());
     tensor_anchors->copyToHostTensor(&tensor_anchors_host);
     auto anchors_data  = tensor_anchors_host.host<float>();
