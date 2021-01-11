@@ -3,8 +3,7 @@
 Face::Face(std::string mnn_path){
     //model_configuration
     key_interpreter = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromFile(mnn_path.c_str()));
-//    config.type = static_cast<MNNForwardType>(MNN_FORWARD_CPU);
-    config.type = static_cast<MNNForwardType>(MNN_FORWARD_VULKAN);
+    config.type = static_cast<MNNForwardType>(MNN_FORWARD_CPU);
     config.numThread = THREADS;
     backendConfig.precision = (MNN::BackendConfig::PrecisionMode)0;
     config.backendConfig = &backendConfig;
@@ -17,61 +16,46 @@ Face::Face(std::string mnn_path){
     ::memcpy(image_config.normal, NORMALIZATION, sizeof(NORMALIZATION));
 }
 
-//测试不带角度的人脸关键点
-//float* Face:: detection(unsigned char *image_data, int width, int height, int channel) {
-//    MNN::Tensor* input_tensor = key_interpreter->getSessionInput(key_session, nullptr);
-//    MNN::CV::Matrix transform;
-//    std::vector<int>dims = { 1, CHANNELS, HEIGHT, WIDTH };
-//    key_interpreter->resizeTensor(input_tensor, dims);
-//    key_interpreter->resizeSession(key_session);
-//    transform.postScale(1.0f/(float)HEIGHT, 1.0f/(float)WIDTH);
-//    transform.postScale((float)width, (float)height);
-//    std::unique_ptr<MNN::CV::ImageProcess> process(MNN::CV::ImageProcess::create(
-//            image_config.sourceFormat, image_config.destFormat, image_config.mean,
-//            3, image_config.normal, 3));
-//    process->setMatrix(transform);
-//    process->convert(image_data, width, height, width*channel, input_tensor);
-//    key_interpreter->runSession(key_session);
-//    std::string output_tensor_name = "conv8_fwd";
-//    MNN::Tensor *tensor_landmarks  = key_interpreter->getSessionOutput(key_session, output_tensor_name.c_str());
-//    MNN::Tensor tensor_landmarks_host(tensor_landmarks, tensor_landmarks->getDimensionType());
-//    tensor_landmarks->copyToHostTensor(&tensor_landmarks_host);
-//    auto landmarks_data  = tensor_landmarks_host.host<float>();
-//    return landmarks_data;
-//}
+float Face::IOU(FaceInfo boxes_one, FaceInfo boxes_two) {
+    float x_min = std::max(boxes_one.x_min,boxes_two.x_min);
+    float y_min = std::max(boxes_one.y_min,boxes_two.y_min);
+    float x_max = std::min(boxes_one.x_max,boxes_two.x_max);
+    float y_max = std::min(boxes_one.y_max,boxes_two.y_max);
+    if(x_min > x_max || y_min > y_max)
+        return 0.0f;
+    else{
+        float area_and = (x_max - x_min) * (y_max - y_min);
+        float area_or = (boxes_one.x_max-boxes_one.x_min)*(boxes_one.y_max-boxes_one.y_min) +
+                        (boxes_two.x_max-boxes_two.x_min)*(boxes_two.y_max-boxes_two.y_min) -
+                        area_and;
+        return area_and/area_or;
+    }
+}
 
-//测试带角度的人脸关键点
-//float* Face:: detection(unsigned char *image_data, int width, int height, int channel) {
-//    MNN::Tensor* input_tensor = key_interpreter->getSessionInput(key_session, nullptr);
-//    MNN::CV::Matrix transform;
-//    std::vector<int>dims = { 1, CHANNELS, HEIGHT, WIDTH };
-//    key_interpreter->resizeTensor(input_tensor, dims);
-//    key_interpreter->resizeSession(key_session);
-//    transform.postScale(1.0f/(float)width, 1.0f/(float)height);
-//    transform.postScale((float)width, (float)height);
-//    std::unique_ptr<MNN::CV::ImageProcess> process(MNN::CV::ImageProcess::create(
-//            image_config.sourceFormat, image_config.destFormat, image_config.mean,
-//            3, image_config.normal, 3));
-//    process->setMatrix(transform);
-//    process->convert(image_data, width, height, width*channel, input_tensor);
-//    key_interpreter->runSession(key_session);
-//    std::string landmarks = "landmarks";
-//    std::string angle = "angle";
-//    float* result = new float[199]{0.0f};
-//    MNN::Tensor *tensor_landmarks  = key_interpreter->getSessionOutput(key_session, landmarks.c_str());
-//    MNN::Tensor tensor_landmarks_host(tensor_landmarks, tensor_landmarks->getDimensionType());
-//    tensor_landmarks->copyToHostTensor(&tensor_landmarks_host);
-//    auto landmarks_data  = tensor_landmarks_host.host<float>();
-//    MNN::Tensor *tensor_angle  = key_interpreter->getSessionOutput(key_session, angle.c_str());
-//    MNN::Tensor tensor_angle_host(tensor_landmarks, tensor_angle->getDimensionType());
-//    tensor_angle->copyToHostTensor(&tensor_angle_host);
-//    auto angle_data  = tensor_angle_host.host<float>();
-//    memcpy(result,landmarks_data,196 * sizeof(landmarks_data[0]));
-//    memcpy(&result[196],angle_data,3 * sizeof(angle_data[0]));
-//    return result;
-//}
+bool Face::sort_score(FaceInfo boxes_one, FaceInfo boxes_two) {
+    return boxes_one.score > boxes_two.score;
+}
 
-//测试人脸
+std::vector<FaceInfo> Face::NMS(std::vector<FaceInfo> boxes, float threshold) {
+    std::sort(boxes.begin(),boxes.end(),sort_score);
+    std::vector<FaceInfo>res;
+    int N = boxes.size();
+    std::vector<int> labels(N,-1);
+    for(int i=0;i<N-1;++i){
+        for(int j=i+1;j<N;++j){
+            float iou = IOU(boxes[i],boxes[j]);
+            if(iou > threshold){
+                labels[j]=0;
+            }
+        }
+    }
+    for(int i=0;i<N;i++){
+        if(labels[i] == -1){
+            res.push_back(boxes[i]);
+        }
+    }
+    return res;
+}
 float* Face:: detection(unsigned char *image_data, int width, int height, int channel) {
     MNN::Tensor* input_tensor = key_interpreter->getSessionInput(key_session, nullptr);
     MNN::CV::Matrix transform;
@@ -86,20 +70,63 @@ float* Face:: detection(unsigned char *image_data, int width, int height, int ch
     process->setMatrix(transform);
     process->convert(image_data, width, height, width*channel, input_tensor);
     key_interpreter->runSession(key_session);
-    std::string locations = "TFLite_Detection_PostProcess";
-    std::string scores = "TFLite_Detection_PostProcess:2";
-    float* result = new float[50]{0.0f};
-    MNN::Tensor *tensor_locations  = key_interpreter->getSessionOutput(key_session, locations.c_str());
-    MNN::Tensor tensor_locations_host(tensor_locations, tensor_locations->getDimensionType());
-    tensor_locations->copyToHostTensor(&tensor_locations_host);
-    auto location_data  = tensor_locations_host.host<float>();
+    std::string boxes = "Squeeze";
+    std::string scores = "convert_scores";
+    std::string anchors = "anchors";
+
+    MNN::Tensor *tensor_boxes  = key_interpreter->getSessionOutput(key_session, boxes.c_str());
+    MNN::Tensor tensor_boxes_host(tensor_boxes, tensor_boxes->getDimensionType());
+    tensor_boxes->copyToHostTensor(&tensor_boxes_host);
+    auto boxes_data  = tensor_boxes_host.host<float>();
 
     MNN::Tensor *tensor_scores  = key_interpreter->getSessionOutput(key_session, scores.c_str());
     MNN::Tensor tensor_scores_host(tensor_scores, tensor_scores->getDimensionType());
     tensor_scores->copyToHostTensor(&tensor_scores_host);
-    auto score_data  = tensor_scores_host.host<float>();
+    auto scores_data  = tensor_scores_host.host<float>();
 
-    memcpy(result,location_data,40 * sizeof(location_data[0]));
-    memcpy(&result[40],score_data,10 * sizeof(score_data[0]));
+    MNN::Tensor *tensor_anchors  = key_interpreter->getSessionOutput(key_session,anchors.c_str());
+    MNN::Tensor tensor_anchors_host(tensor_anchors, tensor_anchors->getDimensionType());
+    tensor_anchors->copyToHostTensor(&tensor_anchors_host);
+    auto anchors_data  = tensor_anchors_host.host<float>();
+
+    std::vector<FaceInfo>boxes_tmp;
+    for(int i=0;i<OUTPUT_NUM;++i){
+        float score_background = exp(scores_data[i*2]);
+        float score_foreground = exp(scores_data[i*2+1]);
+        float score = score_foreground/(score_foreground + score_background);
+        if(score > score_threshold){
+            FaceInfo  faceInfo;
+            float y_center =  boxes_data[i*4 + 0] / Y_SCALE  * anchors_data[i*4 + 2] + anchors_data[i*4 + 0];
+            float x_center =  boxes_data[i*4 + 1] / X_SCALE  * anchors_data[i*4 + 3] + anchors_data[i*4 + 1];
+            float h  = exp(boxes_data[i*4 + 2] / H_SCALE) * anchors_data[i*4 + 2];
+            float w  = exp(boxes_data[i*4 + 3] / W_SCALE) * anchors_data[i*4 + 3];
+
+            auto y_min  = ( y_center - h * 0.5 ) * height;
+            auto x_min  = ( x_center - w * 0.5 ) * width;
+            auto y_max  = ( y_center + h * 0.5 ) * height;
+            auto x_max  = ( x_center + w * 0.5 ) * width;
+
+            if(x_min <=0 || y_min <= 0 || x_max <= 0 || y_max <= 0){
+                continue;;
+            }
+            faceInfo.x_min = x_min;
+            faceInfo.y_min = y_min;
+            faceInfo.x_max = x_max;
+            faceInfo.y_max = y_max;
+            faceInfo.score = score;
+            boxes_tmp.push_back(faceInfo);
+        }
+    }
+    std::vector<FaceInfo>res = NMS(boxes_tmp,nms_threshold);
+    auto result = new float[5*res.size()];
+    for(int i=0;i<res.size();i++){
+        result[5*i] = res[i].x_min;
+        result[5*i+1] = res[i].y_min;
+        result[5*i+2] = res[i].x_max;
+        result[5*i+3] = res[i].y_max;
+        result[5*i+4] = res[i].score;
+        LOGD("x_min=%.4f,y_min=%.4f,x_max=%.4f,y_max=%.4f,score=%.4f",
+                res[i].x_min,res[i].y_min,res[i].x_max,res[i].y_max,res[i].score);
+    }
     return result;
 }

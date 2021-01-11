@@ -17,9 +17,21 @@
 #define KEY_TAG "KEYPOINT"
 using namespace  std;
 
+typedef struct FaceInfo{
+    float x_min;
+    float y_min;
+    float x_max;
+    float y_max;
+    float score;
+}FaceInfo;
+
+
 class Face {
 public:
     Face(std::string model_path);
+    static float IOU(FaceInfo boxes_one,FaceInfo boxes_two);
+    static bool sort_score(FaceInfo boxes_one,FaceInfo boxes_two);
+    static std::vector<FaceInfo> NMS(std::vector<FaceInfo> boxes,float threshold);
     float* detection(unsigned char *image_data, int width, int height, int channel);
 
 private:
@@ -29,16 +41,19 @@ private:
     MNN::ScheduleConfig config;
     MNN::BackendConfig backendConfig;
 
-    int WIDTH = 320;
-    int HEIGHT = 240;
+    int WIDTH = 128;
+    int HEIGHT = 128;
     int CHANNELS = 3;
     int THREADS = 2;
-//    const float MEAN[3] = {123.0f,123.0f,123.0f};
-//    const float NORMALIZATION[3] = {58.0f,58.0f,58.0f};
+    int OUTPUT_NUM = 960;
+    float X_SCALE = 10.0;
+    float Y_SCALE = 10.0;
+    float H_SCALE = 5.0;
+    float W_SCALE = 5.0;
+    float score_threshold = 0.5f;
+    float nms_threshold = 0.45f;
     const float MEAN[3] = {0.0f,0.0f,0.0f};
     const float NORMALIZATION[3] = {0.003921569f,0.003921569f,0.003921569f};
-
-
 };
 
 #endif /* Face_hpp */

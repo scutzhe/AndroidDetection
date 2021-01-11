@@ -1,14 +1,7 @@
 # ninja log v5
-1	353	1610077446	CMakeFiles/face_detection.dir/src/main/cpp/jni.cpp.o	a63cc9700abf892c
-394	412	1610077446	../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libface_detection.so	b6a1ccf706790bd8
-1	394	1610077446	CMakeFiles/face_detection.dir/src/main/cpp/Face.cpp.o	e2ab1160840c33fd
-0	386	1610077568	CMakeFiles/face_detection.dir/src/main/cpp/Face.cpp.o	e2ab1160840c33fd
-386	404	1610077568	../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libface_detection.so	b6a1ccf706790bd8
-0	348	1610077670	CMakeFiles/face_detection.dir/src/main/cpp/jni.cpp.o	a63cc9700abf892c
-0	393	1610077670	CMakeFiles/face_detection.dir/src/main/cpp/Face.cpp.o	e2ab1160840c33fd
-393	411	1610077670	../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libface_detection.so	b6a1ccf706790bd8
-0	363	1610084256	CMakeFiles/face_detection.dir/src/main/cpp/jni.cpp.o	a63cc9700abf892c
-0	384	1610084256	CMakeFiles/face_detection.dir/src/main/cpp/Face.cpp.o	e2ab1160840c33fd
-384	402	1610084256	../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libface_detection.so	b6a1ccf706790bd8
-0	6	0	clean	3305464fe52076a7
+0	364	1610347041	CMakeFiles/face_detection.dir/src/main/cpp/jni.cpp.o	a63cc9700abf892c
+441	466	1610347069	../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libface_detection.so	b6a1ccf706790bd8
+1	441	1610347069	CMakeFiles/face_detection.dir/src/main/cpp/Face.cpp.o	e2ab1160840c33fd
+1	438	1610347088	CMakeFiles/face_detection.dir/src/main/cpp/Face.cpp.o	e2ab1160840c33fd
+438	461	1610347088	../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libface_detection.so	b6a1ccf706790bd8
 0	2	0	clean	3305464fe52076a7

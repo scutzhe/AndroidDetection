@@ -76,11 +76,8 @@ public class MainActivity extends Activity {
 
         //copy model
         try {
-//            copyBigDataToSD("face_keypoint_0524.mnn");
-//            copyBigDataToSD("nme_min_aug_vulkan.mnn");
-//            copyBigDataToSD("nme_min_aug_cpu.mnn");
-//            copyBigDataToSD("ssd_mobilenetv2_face.mnn");
-            copyBigDataToSD("ssd_mobilenetv2_face_vulkan.mnn");
+//            copyBigDataToSD("face.mnn");
+            copyBigDataToSD("face_quant.mnn");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -122,35 +119,18 @@ public class MainActivity extends Activity {
                infoResult.setText("time cost："+timeDetectFace+"ms");
                Log.i(TAG, "time cost："+timeDetectFace);
                Bitmap drawBitmap = yourSelectedImage.copy(Bitmap.Config.ARGB_8888, true);
+               int length = faceKeyPoint.length;
                Log.i(TAG,"length:"+faceKeyPoint.length);
-               for(int i=0;i<10;i++){
-                   float score = faceKeyPoint[40+i];
-                   if(score > 0.75){
-                       float y_min = faceKeyPoint[4*i] * drawBitmap.getHeight();
-                       float x_min = faceKeyPoint[4*i+1] * drawBitmap.getWidth();
-                       float y_max = faceKeyPoint[4*i+2] * drawBitmap.getHeight();
-                       float x_max = faceKeyPoint[4*i+3] * drawBitmap.getWidth();
+               for(int i=0;i<length/5;i++){
+                   float score = faceKeyPoint[5*i+4];
+                   if(score > 0.4){
+                       float x_min = faceKeyPoint[5*i];
+                       float y_min = faceKeyPoint[5*i+1];
+                       float x_max = faceKeyPoint[5*i+2];
+                       float y_max = faceKeyPoint[5*i+3];
                        Log.i(TAG,"x_min,y_min,x_max,y_max,score:"+x_min+","+y_min+","+x_max+","+y_max+","+score);
                    }
                }
-//               for (int i=0; i<98; i++) {
-//                   Canvas canvas = new Canvas(drawBitmap);
-//                   Paint paint = new Paint();
-//                   paint.setColor(Color.RED);
-//                   paint.setStyle(Paint.Style.STROKE);
-//                   paint.setStrokeWidth(5);
-//                   //Draw rect
-//                   float x = faceKeyPoint[i*2] * 112;
-//                   float y = faceKeyPoint[i*2 + 1] * 112;
-////                   int x_ = Math.round(x / 96  * width) ;
-////                   int y_ = Math.round(y / 96 * height);
-//                   Log.i(TAG,"x,y:"+x+","+y);
-////                   canvas.drawCircle(x_,y_,0.1f, paint);
-//                   canvas.drawCircle(x,y,0.1f, paint);
-//               }
-//                Log.i(TAG,"yaw,pitch,roll:"+faceKeyPoint[196] * 180 /Math.PI +","
-//                        +faceKeyPoint[197] * 180 / Math.PI+","
-//                        +faceKeyPoint[198]* 180 / Math.PI);
 
                 imageView.setImageBitmap(drawBitmap);
             }
