@@ -15,8 +15,7 @@ set_target_properties(MNN_CL
   ${CMAKE_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI}/libMNN_CL.so)
 
 add_library(face_detection SHARED src/main/cpp/jni.cpp
-                              src/main/cpp/Face.cpp
-                              src/main/cpp/net.cpp)
+                              src/main/cpp/Face.cpp)
 
 find_library(log-lib log)
 find_library( jnigraphics-lib jnigraphics )

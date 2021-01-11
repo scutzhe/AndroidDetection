@@ -79,8 +79,8 @@ public class MainActivity extends Activity {
 
         //copy model
         try {
-            copyBigDataToSD("face_320.mnn");
-            copyBigDataToSD("keyPoint_96.mnn");
+            copyBigDataToSD("face.mnn");
+            copyBigDataToSD("key_cpu.mnn");
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -125,63 +125,36 @@ public class MainActivity extends Activity {
                 int width = yourSelectedImage.getWidth();
                 int height = yourSelectedImage.getHeight();
                 byte[] imageData = getPixelsRGBA(yourSelectedImage);
-//                Log.i(TAG,"imageData.length:"+imageData.length);
-//                for(int i=0;i<imageData.length;i++){
-//                    Log.i(TAG,"index"+ i + ":" + imageData[i]);
-////                    Log.i(TAG, "imageData:"+imageData[i]);
-//                }
-
                 long timeDetectFace = System.currentTimeMillis();
 
-                //start face_detection
-                int faceInfo[] =  faceSDKNative.FaceDetection(imageData, width, height,4);
-                // keyPoint detection
-
+                //face_detection
+//                float faceInfo[] =  faceSDKNative.FaceDetection(imageData, width, height,4);
+//                int face_length = faceInfo.length;
+                // keyPoint_detection
+                float faceKeyPoint[] = faceSDKNative.KeyDetection(imageData, width, height,4);
                 timeDetectFace = System.currentTimeMillis() - timeDetectFace;
 
                 //Get Results
-                Log.i(TAG,"faceInfo.length:"+faceInfo.length);
-                if (faceInfo.length>1) {
-                   int faceNum = faceInfo[0];
-//                   infoResult.setText("detection time："+timeDetectFace+"ms,   face number：" + faceNum);
-//                   Log.i(TAG, "detection time："+timeDetectFace);
-//                   Log.i(TAG, "face's num：" + faceNum );
-
-                   Bitmap drawBitmap = yourSelectedImage.copy(Bitmap.Config.ARGB_8888, true);
-                   for (int i=0; i<faceNum; i++) {
-                       int left, top, right, bottom;
-                       Canvas canvas = new Canvas(drawBitmap);
-                       Paint paint = new Paint();
-                       left = faceInfo[1+4*i];
-                       top = faceInfo[2+4*i];
-                       right = faceInfo[3+4*i];
-                       bottom = faceInfo[4+4*i];
-                       int cropWidth = right - left;
-                       int cropHeight = bottom - top;
-                       Bitmap cropBitmap = Bitmap.createBitmap(drawBitmap,left,top,cropWidth,cropHeight,null,false);
-                       byte[] cropImageData = getPixelsRGBA(cropBitmap);
-                       float faceKeyPoint[] = faceSDKNative.KeyPointDetection(cropImageData,cropWidth,cropHeight,4);
-//                       for(int j=0;j<98;i++){
-//                           float x = faceKeyPoint[j*2];
-//                           float y = faceKeyPoint[j*2 + 1];
-//                           // add face offset
-//                           int x_ = Math.round(x / 96  * width) + left ;
-//                           int y_ = Math.round(y / 96 * height) + top;
-//                           Log.i(TAG,"x_,y_:"+x_+","+y_);
-//                       }
-                       Log.i(TAG,"length:"+faceKeyPoint.length);
-                       Log.i(TAG,"detection");
-                       paint.setColor(Color.RED);
-                       paint.setStyle(Paint.Style.STROKE);
-                       paint.setStrokeWidth(5);
-                       //Draw rect
-                       canvas.drawRect(left, top, right, bottom, paint);
-
-                   }
-                   imageView.setImageBitmap(drawBitmap);
-                }else{
-                   infoResult.setText("no face found");
-               }
+//                Log.i(TAG,"faceInfo.length:"+faceInfo.length);
+//                for(int i=0;i<face_length/5;i++){
+//                    float score = faceInfo[5*i+4];
+//                    if(score > 0.4) {
+//                        float x_min = faceInfo[5 * i];
+//                        float y_min = faceInfo[5 * i + 1];
+//                        float x_max = faceInfo[5 * i + 2];
+//                        float y_max = faceInfo[5 * i + 3];
+//                        Log.i(TAG, "x_min,y_min,x_max,y_max,score:" + x_min + "," + y_min + "," + x_max + "," + y_max + "," + score);
+//                    }
+//               }
+                for (int i=0; i<98; i++) {
+                    //Draw rect
+                    float x = faceKeyPoint[i*2] * 96;
+                    float y = faceKeyPoint[i*2 + 1] * 96;
+                    Log.i(TAG,"x,y:"+x+","+y);
+                }
+                Log.i(TAG,"yaw,pitch,roll:"+faceKeyPoint[196] * 180 /Math.PI +","
+                        +faceKeyPoint[197] * 180 / Math.PI+","
+                        +faceKeyPoint[198]* 180 / Math.PI);
 
             }
         });

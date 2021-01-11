@@ -1,241 +1,177 @@
 #include "Face.hpp"
-#define TAG "cpp"
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
-#define clip(x, y) (x < 0 ? 0 : (x > y ? y : x))
 
-using namespace std;
+Face::Face(const std::string face_mnn_path,const std::string key_mnn_path){
+    //face_detection
+    //model_configuration
+    face_interpreter = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromFile(face_mnn_path.c_str()));
+    face_config.type = static_cast<MNNForwardType>(MNN_FORWARD_CPU);
+    face_config.numThread = THREADS;
+    face_backendConfig.precision = (MNN::BackendConfig::PrecisionMode)0;
+    face_config.backendConfig = &face_backendConfig;
+    face_session = face_interpreter->createSession(face_config);
 
-Face::Face(std::string &detection_mnn_path,std::string &keyPoint_mnn_path,
-           int input_width, int input_length, int num_thread_,
-           float score_threshold_, float iou_threshold_) {
-    // face detection
-    num_thread = num_thread_;
-    score_threshold = score_threshold_;
-    iou_threshold = iou_threshold_;
-    in_w = input_width;
-    in_h = input_length;
-    w_h_list = {in_w, in_h};
+    //image_configuration
+    face_image_config.sourceFormat = (MNN::CV::ImageFormat)0;//RGBA
+    face_image_config.destFormat = (MNN::CV::ImageFormat)2;// 1->RGB,2->BGR
+    ::memcpy(face_image_config.mean, MEAN, sizeof(MEAN));
+    ::memcpy(face_image_config.normal, NORMALIZATION, sizeof(NORMALIZATION));
 
-    for (auto size : w_h_list) {
-        std::vector<float> fm_item;
-        for (float stride : strides) {
-            fm_item.push_back(ceil(size / stride));
-        }
-        featuremap_size.push_back(fm_item);
+    //key_detection
+    //model_configuration
+    key_interpreter = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromFile(key_mnn_path.c_str()));
+    key_config.type = static_cast<MNNForwardType>(MNN_FORWARD_CPU);
+    key_config.numThread = KEY_THREADS;
+    key_backendConfig.precision = (MNN::BackendConfig::PrecisionMode)0;
+    key_config.backendConfig = &key_backendConfig;
+    key_session = key_interpreter->createSession(key_config);
+
+    //image_configuration
+    key_image_config.sourceFormat = (MNN::CV::ImageFormat)0;//RGBA
+    key_image_config.destFormat = (MNN::CV::ImageFormat)2;// 1->RGB,2->BGR
+    ::memcpy(key_image_config.mean, KEY_MEAN, sizeof(KEY_MEAN));
+    ::memcpy(key_image_config.normal, KEY_NORMALIZATION, sizeof(KEY_NORMALIZATION));
+}
+
+float Face::IOU(FaceInfo boxes_one, FaceInfo boxes_two) {
+    float x_min = std::max(boxes_one.x_min,boxes_two.x_min);
+    float y_min = std::max(boxes_one.y_min,boxes_two.y_min);
+    float x_max = std::min(boxes_one.x_max,boxes_two.x_max);
+    float y_max = std::min(boxes_one.y_max,boxes_two.y_max);
+    if(x_min > x_max || y_min > y_max)
+        return 0.0f;
+    else{
+        float area_and = (x_max - x_min) * (y_max - y_min);
+        float area_or = (boxes_one.x_max-boxes_one.x_min)*(boxes_one.y_max-boxes_one.y_min) +
+                        (boxes_two.x_max-boxes_two.x_min)*(boxes_two.y_max-boxes_two.y_min) -
+                        area_and;
+        return area_and/area_or;
     }
+}
 
-    for (auto size : w_h_list) {
-        shrinkage_size.push_back(strides);
-    }
-    /* generate prior anchors */
-    for (int index = 0; index < num_featuremap; index++) {
-        float scale_w = (float)in_w / shrinkage_size[0][index];
-        float scale_h = (float)in_h / shrinkage_size[1][index];
-        for (auto j = 0; j < featuremap_size[1][index]; j++) {
-            for (auto i = 0; i < featuremap_size[0][index]; i++) {
-                float x_center = (float)(i + 0.5) / scale_w;
-                float y_center = (float)(j + 0.5) / scale_h;
+bool Face::sort_score(FaceInfo boxes_one, FaceInfo boxes_two) {
+    return boxes_one.score > boxes_two.score;
+}
 
-                for (float k : min_boxes[index]) {
-                    float w = k / (float)in_w;
-                    float h = k / (float)in_h;
-                    priors.push_back({clip(x_center, 1), clip(y_center, 1), clip(w, 1), clip(h, 1)});
-                }
+std::vector<FaceInfo> Face::NMS(std::vector<FaceInfo> boxes, float threshold) {
+    std::sort(boxes.begin(),boxes.end(),sort_score);
+    std::vector<FaceInfo>res;
+    int N = boxes.size();
+    std::vector<int> labels(N,-1);
+    for(int i=0;i<N-1;++i){
+        for(int j=i+1;j<N;++j){
+            float iou = IOU(boxes[i],boxes[j]);
+            if(iou > threshold){
+                labels[j]=0;
             }
         }
     }
-    /* generate prior anchors finished */
-    num_anchors = priors.size();
-    Face_net.load_param(detection_mnn_path, num_thread);
-    Face_net.set_params(0, 1, mean_vals, norm_vals);
-
-    // keyPoint detection
-    key_interpreter = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromFile(keyPoint_mnn_path.c_str()));
-    config.type = static_cast<MNNForwardType>(MNN_FORWARD_CPU);
-    config.numThread = THREADS;
-    backendConfig.precision = (MNN::BackendConfig::PrecisionMode)0;
-    config.backendConfig = &backendConfig;
-    key_session = key_interpreter->createSession(config);
-
-    //image_configuration
-    image_config.sourceFormat = (MNN::CV::ImageFormat)0;//RGBA
-    image_config.destFormat = (MNN::CV::ImageFormat)2;//BGR
-    ::memcpy(image_config.mean, MEAN, sizeof(MEAN));
-    ::memcpy(image_config.normal, NORMALIZATION, sizeof(NORMALIZATION));
-}
-
-void Face:: Delay(int   time)
-{
-    clock_t  now = clock();
-    while(clock() - now < time   );
-}
-
-std::vector<FaceInfo> Face::face_detection(unsigned char *data, int width, int height, int channel) {
-//    for(int i=0;i<80*640;i++){
-//        LOGD("data[i=%d]=%d",i,data[i]);
-//        Delay(10);
-//    }
-    std::vector<FaceInfo> box_collection;
-    std::vector<FaceInfo> face_list;
-    image_h = height;
-    image_w = width;
-    Inference_engine_tensor out;
-    std::string scores = "scores";
-    out.add_name(scores);
-    std::string boxes = "boxes";
-    out.add_name(boxes);
-    LOGD("in_w=%d,in_h=%d",in_w,in_h);
-    Face_net.inference(data, width, height, channel, in_w, in_h, out);
-    generateBBox(box_collection, out.score(0).get() , out.score(1).get());
-    nms(box_collection, face_list);
-//    for(int i =0;i<face_list.size();i++){
-//        LOGD("x1=%d,y1=%d,x2=%d,y2=%d",(int)face_list[i].x1,(int)face_list[i].y1,(int)face_list[i].x2,(int)face_list[i].y2);
-//        int x_min = (int)face_list[i].x1 - 10;
-//        int y_min = (int)face_list[i].y1 - 10;
-//        int x_max = (int)face_list[i].x2 + 10;
-//        int y_max = (int)face_list[i].y2 + 10;
-//        if(x_min < 0) x_min = 0;
-//        if(y_min < 0) y_min = 0;
-//        if(x_max > width) x_max = width;
-//        if(y_max > height) y_max = height;
-//        LOGD("x_min=%d,y_min=%d,x_max=%d,y_max=%d",x_min,y_min,x_max,y_max);
-//        int width_buffer = x_max - x_min;
-//        int height_buffer = y_max - y_min;
-//        unsigned char* data_crop = (unsigned char *)malloc( width_buffer * height_buffer * channel * sizeof(unsigned char));
-//        transform_buffer(data,data_crop,x_min,y_min,width_buffer,height_buffer,width,channel);
-//
-//        auto landmarks = keyPoint_detection(data_crop,width_buffer,height_buffer,channel);
-//        for(int i=0;i<98;i++){
-//            float x = landmarks[i*2] / 96 * width_buffer;
-//            float y = landmarks[i*2 + 1] / 96 * height_buffer;
-//            LOGD("index=%d,x=%d,y=%d",i,x,y);
-//        }
-//        free(data_crop);
-//    }
-    return face_list;
-}
-
-// buffer crop operation
-void Face::transform_buffer(unsigned char *data,unsigned char* data_crop, int x_min,int y_min, int crop_width, int crop_height, int width, int channel){
-    LOGD("channel=%d",channel);
-    for(int i=0;i<crop_height;++i){
-        memcpy(&data_crop[(i * crop_width) * channel], &data[((i + y_min) * width + x_min) * channel],crop_width * channel);
+    for(int i=0;i<N;i++){
+        if(labels[i] == -1){
+            res.push_back(boxes[i]);
+        }
     }
+    return res;
 }
-
-float* Face:: keyPoint_detection(unsigned char *image_data, int width, int height, int channel){
-    MNN::Tensor* input_tensor = key_interpreter->getSessionInput(key_session, nullptr);
+float* Face:: face_detection(unsigned char *image_data, int width, int height, int channel) {
+    MNN::Tensor* input_tensor = face_interpreter->getSessionInput(face_session, nullptr);
     MNN::CV::Matrix transform;
     std::vector<int>dims = { 1, CHANNELS, HEIGHT, WIDTH };
-    key_interpreter->resizeTensor(input_tensor, dims);
-    key_interpreter->resizeSession(key_session);
-    transform.postScale(1.0f/(float)HEIGHT, 1.0f/(float)WIDTH);
+    face_interpreter->resizeTensor(input_tensor, dims);
+    face_interpreter->resizeSession(face_session);
+    transform.postScale(1.0f/(float)width, 1.0f/(float)height);
     transform.postScale((float)width, (float)height);
     std::unique_ptr<MNN::CV::ImageProcess> process(MNN::CV::ImageProcess::create(
-            image_config.sourceFormat, image_config.destFormat, image_config.mean,
-            3, image_config.normal, 3));
+            face_image_config.sourceFormat, face_image_config.destFormat, face_image_config.mean,
+            3, face_image_config.normal, 3));
+    process->setMatrix(transform);
+    process->convert(image_data, width, height, width*channel, input_tensor);
+    face_interpreter->runSession(face_session);
+    std::string boxes = "Squeeze";
+    std::string scores = "convert_scores";
+    std::string anchors = "anchors";
+
+    MNN::Tensor *tensor_boxes  = face_interpreter->getSessionOutput(face_session, boxes.c_str());
+    MNN::Tensor tensor_boxes_host(tensor_boxes, tensor_boxes->getDimensionType());
+    tensor_boxes->copyToHostTensor(&tensor_boxes_host);
+    auto boxes_data  = tensor_boxes_host.host<float>();
+
+    MNN::Tensor *tensor_scores  = face_interpreter->getSessionOutput(face_session, scores.c_str());
+    MNN::Tensor tensor_scores_host(tensor_scores, tensor_scores->getDimensionType());
+    tensor_scores->copyToHostTensor(&tensor_scores_host);
+    auto scores_data  = tensor_scores_host.host<float>();
+
+    MNN::Tensor *tensor_anchors  = face_interpreter->getSessionOutput(face_session,anchors.c_str());
+    MNN::Tensor tensor_anchors_host(tensor_anchors, tensor_anchors->getDimensionType());
+    tensor_anchors->copyToHostTensor(&tensor_anchors_host);
+    auto anchors_data  = tensor_anchors_host.host<float>();
+
+    std::vector<FaceInfo>boxes_tmp;
+    for(int i=0;i<OUTPUT_NUM;++i){
+        float score_background = exp(scores_data[i*2]);
+        float score_foreground = exp(scores_data[i*2+1]);
+        float score = score_foreground/(score_foreground + score_background);
+        if(score > score_threshold){
+            FaceInfo  faceInfo;
+            float y_center =  boxes_data[i*4 + 0] / Y_SCALE  * anchors_data[i*4 + 2] + anchors_data[i*4 + 0];
+            float x_center =  boxes_data[i*4 + 1] / X_SCALE  * anchors_data[i*4 + 3] + anchors_data[i*4 + 1];
+            float h  = exp(boxes_data[i*4 + 2] / H_SCALE) * anchors_data[i*4 + 2];
+            float w  = exp(boxes_data[i*4 + 3] / W_SCALE) * anchors_data[i*4 + 3];
+
+            auto y_min  = ( y_center - h * 0.5 ) * height;
+            auto x_min  = ( x_center - w * 0.5 ) * width;
+            auto y_max  = ( y_center + h * 0.5 ) * height;
+            auto x_max  = ( x_center + w * 0.5 ) * width;
+
+            if(x_min <=0 || y_min <= 0 || x_max <= 0 || y_max <= 0){
+                continue;;
+            }
+            faceInfo.x_min = x_min;
+            faceInfo.y_min = y_min;
+            faceInfo.x_max = x_max;
+            faceInfo.y_max = y_max;
+            faceInfo.score = score;
+            boxes_tmp.push_back(faceInfo);
+        }
+    }
+    std::vector<FaceInfo>res = NMS(boxes_tmp,nms_threshold);
+    auto result = new float[5*res.size()];
+    for(int i=0;i<res.size();i++){
+        result[5*i] = res[i].x_min;
+        result[5*i+1] = res[i].y_min;
+        result[5*i+2] = res[i].x_max;
+        result[5*i+3] = res[i].y_max;
+        result[5*i+4] = res[i].score;
+    }
+    return result;
+}
+
+float* Face:: key_detection(unsigned char *image_data, int width, int height, int channel) {
+    MNN::Tensor* input_tensor = key_interpreter->getSessionInput(key_session, nullptr);
+    MNN::CV::Matrix transform;
+    std::vector<int>dims = { 1, KEY_CHANNELS, KEY_HEIGHT, KEY_WIDTH };
+    key_interpreter->resizeTensor(input_tensor, dims);
+    key_interpreter->resizeSession(key_session);
+    transform.postScale(1.0f/(float)width, 1.0f/(float)height);
+    transform.postScale((float)width, (float)height);
+    std::unique_ptr<MNN::CV::ImageProcess> process(MNN::CV::ImageProcess::create(
+            key_image_config.sourceFormat, key_image_config.destFormat, key_image_config.mean,
+            3, key_image_config.normal, 3));
     process->setMatrix(transform);
     process->convert(image_data, width, height, width*channel, input_tensor);
     key_interpreter->runSession(key_session);
-    std::string output_tensor_name = "conv8_fwd";
-    MNN::Tensor *tensor_landmarks  = key_interpreter->getSessionOutput(key_session, output_tensor_name.c_str());
+    std::string landmarks = "landmarks";
+    std::string angle = "angle";
+    auto result = new float[199]{0.0f};
+    MNN::Tensor *tensor_landmarks  = key_interpreter->getSessionOutput(key_session, landmarks.c_str());
     MNN::Tensor tensor_landmarks_host(tensor_landmarks, tensor_landmarks->getDimensionType());
     tensor_landmarks->copyToHostTensor(&tensor_landmarks_host);
     auto landmarks_data  = tensor_landmarks_host.host<float>();
-    return landmarks_data;
+    MNN::Tensor *tensor_angle  = key_interpreter->getSessionOutput(key_session, angle.c_str());
+    MNN::Tensor tensor_angle_host(tensor_landmarks, tensor_angle->getDimensionType());
+    tensor_angle->copyToHostTensor(&tensor_angle_host);
+    auto angle_data  = tensor_angle_host.host<float>();
+    memcpy(result,landmarks_data,196 * sizeof(landmarks_data[0]));
+    memcpy(&result[196],angle_data,3 * sizeof(angle_data[0]));
+    return result;
 }
 
-void Face::generateBBox(std::vector<FaceInfo> &bbox_collection, float* scores, float* boxes) {
-    for (int i = 0; i < num_anchors; i++) {
-        if (scores[i * 2 + 1 ] > score_threshold) {
-            FaceInfo rects;
-            float x_center = boxes[i * 4] * center_variance * priors[i][2] + priors[i][0];
-            float y_center = boxes[i * 4 + 1] * center_variance * priors[i][3] + priors[i][1];
-            float w = exp(boxes[i * 4 + 2] * size_variance) * priors[i][2];
-            float h = exp(boxes[i * 4 + 3] * size_variance) * priors[i][3];
-
-            rects.x1 = clip(x_center - w / 2.0, 1) * image_w;
-            rects.y1 = clip(y_center - h / 2.0, 1) * image_h;
-            rects.x2 = clip(x_center + w / 2.0, 1) * image_w;
-            rects.y2 = clip(y_center + h / 2.0, 1) * image_h;
-            rects.score = clip(scores[i * 2 + 1 ], 1);
-
-            bbox_collection.push_back(rects);
-        }
-    }
-}
-
-void Face::nms(std::vector<FaceInfo> &input, std::vector<FaceInfo> &output, int type) {
-    std::sort(input.begin(), input.end(), [](const FaceInfo &a, const FaceInfo &b) { return a.score > b.score; });
-    int box_num = input.size();
-    std::vector<int> merged(box_num, 0);
-    for (int i = 0; i < box_num; i++) {
-        if (merged[i])
-            continue;
-        std::vector<FaceInfo> buf;
-
-        buf.push_back(input[i]);
-        merged[i] = 1;
-
-        float h0 = input[i].y2 - input[i].y1 + 1;
-        float w0 = input[i].x2 - input[i].x1 + 1;
-
-        float area0 = h0 * w0;
-
-        for (int j = i + 1; j < box_num; j++) {
-            if (merged[j])
-                continue;
-
-            float inner_x0 = input[i].x1 > input[j].x1 ? input[i].x1 : input[j].x1;
-            float inner_y0 = input[i].y1 > input[j].y1 ? input[i].y1 : input[j].y1;
-
-            float inner_x1 = input[i].x2 < input[j].x2 ? input[i].x2 : input[j].x2;
-            float inner_y1 = input[i].y2 < input[j].y2 ? input[i].y2 : input[j].y2;
-
-            float inner_h = inner_y1 - inner_y0 + 1;
-            float inner_w = inner_x1 - inner_x0 + 1;
-
-            if (inner_h <= 0 || inner_w <= 0)
-                continue;
-
-            float inner_area = inner_h * inner_w;
-            float h1 = input[j].y2 - input[j].y1 + 1;
-            float w1 = input[j].x2 - input[j].x1 + 1;
-            float area1 = h1 * w1;
-            float score;
-            score = inner_area / (area0 + area1 - inner_area);
-            if (score > iou_threshold) {
-                merged[j] = 1;
-                buf.push_back(input[j]);
-            }
-        }
-        switch (type) {
-            case hard_nms: {
-                output.push_back(buf[0]);
-                break;
-            }
-            case blending_nms: {
-                float total = 0;
-                for (int i = 0; i < buf.size(); i++) {
-                    total += exp(buf[i].score);
-                }
-                FaceInfo rects;
-                memset(&rects, 0, sizeof(rects));
-                for (int i = 0; i < buf.size(); i++) {
-                    float rate = exp(buf[i].score) / total;
-                    rects.x1 += buf[i].x1 * rate;
-                    rects.y1 += buf[i].y1 * rate;
-                    rects.x2 += buf[i].x2 * rate;
-                    rects.y2 += buf[i].y2 * rate;
-                    rects.score += buf[i].score * rate;
-                }
-                output.push_back(rects);
-                break;
-            }
-            default: {
-                printf("wrong type of nms.");
-                exit(-1);
-            }
-        }
-    }
-}

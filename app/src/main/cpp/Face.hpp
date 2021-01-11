@@ -7,77 +7,72 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <cstring>
-#include <ctime>
 #include "Interpreter.hpp"
 #include "MNNDefine.h"
 #include "Tensor.hpp"
 #include "ImageProcess.hpp"
 #include "Matrix.h"
-#include "net.h"
 
-#define num_featuremap 4
-#define hard_nms 1
-#define blending_nms 2
-typedef struct FaceInfo {
-    float x1;
-    float y1;
-    float x2;
-    float y2;
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, KEY_TAG, __VA_ARGS__)
+#define KEY_TAG "KEYPOINT"
+
+using namespace  std;
+
+typedef struct FaceInfo{
+    float x_min;
+    float y_min;
+    float x_max;
+    float y_max;
     float score;
-} FaceInfo;
+}FaceInfo;
+
 
 class Face {
 public:
-    Face(std::string &detection_mnn_path, std::string &keyPoint_mnn_path, int input_width, int input_length, int num_thread_ = 4, float score_threshold_ = 0.7, float iou_threshold_ = 0.35);
-    std::vector<FaceInfo> face_detection(unsigned char *raw_image, int width, int height, int channel);
-    float * keyPoint_detection(unsigned char *image_data, int width, int height, int channel);
-    void transform_buffer(unsigned char *data, unsigned char* data_crop, int x_min, int y_min, int crop_width, int crop_height, int width, int channel);
-    void generateBBox(std::vector<FaceInfo> &bbox_collection,  float* scores, float* boxes);
-    void nms(std::vector<FaceInfo> &input, std::vector<FaceInfo> &output, int type = blending_nms);
-    void Delay(int  time);
+    //人脸检测
+    Face(const std::string face_model_path,const std::string key_model_path);
+    static float IOU(FaceInfo boxes_one,FaceInfo boxes_two);
+    static bool sort_score(FaceInfo boxes_one,FaceInfo boxes_two);
+    static std::vector<FaceInfo> NMS(std::vector<FaceInfo> boxes,float threshold);
+    float* face_detection(unsigned char *image_data, int width, int height, int channel);
+
+    //关键点检测
+    float* key_detection(unsigned char *image_data, int width, int height, int channel);
+
 private:
-    //face detection
-    Inference_engine Face_net;
-    int num_thread;
-    int image_w;
-    int image_h;
+    //人脸检测
+    std::shared_ptr<MNN::Interpreter>face_interpreter = nullptr;
+    MNN::Session *face_session = nullptr;
+    MNN::CV::ImageProcess::Config face_image_config;
+    MNN::ScheduleConfig face_config;
+    MNN::BackendConfig face_backendConfig;
 
-    int in_w;
-    int in_h;
-    int num_anchors;
+    int WIDTH = 128;
+    int HEIGHT = 128;
+    int CHANNELS = 3;
+    int THREADS = 2;
+    int OUTPUT_NUM = 960;
+    float X_SCALE = 10.0;
+    float Y_SCALE = 10.0;
+    float H_SCALE = 5.0;
+    float W_SCALE = 5.0;
+    float score_threshold = 0.5f;
+    float nms_threshold = 0.45f;
+    const float MEAN[3] = {0.0f,0.0f,0.0f};
+    const float NORMALIZATION[3] = {0.003921569f,0.003921569f,0.003921569f};
 
-    float score_threshold;
-    float iou_threshold;
-
-    float mean_vals[3] = {127.0f, 127.0f, 127.0f};
-    float norm_vals[3] = {1.0 / 128.0f, 1.0 / 128.0f, 1.0 / 128.0f};
-
-    const float center_variance = 0.1;
-    const float size_variance = 0.2;
-    const std::vector<std::vector<float>> min_boxes = {
-                        {10.0f,  16.0f,  24.0f},
-                        {32.0f,  48.0f},
-                        {64.0f,  96.0f},
-                        {128.0f, 192.0f, 256.0f}};
-    const std::vector<float> strides = {8.0, 16.0, 32.0, 64.0};
-    std::vector<std::vector<float>> featuremap_size;
-    std::vector<std::vector<float>> shrinkage_size;
-    std::vector<int> w_h_list;
-    std::vector<std::vector<float>> priors = {};
-
-    // keyPoint detection
+    //人脸关键点检测
     std::shared_ptr<MNN::Interpreter>key_interpreter = nullptr;
     MNN::Session *key_session = nullptr;
-    MNN::CV::ImageProcess::Config image_config;
-    MNN::ScheduleConfig config;
-    MNN::BackendConfig backendConfig;
+    MNN::CV::ImageProcess::Config key_image_config;
+    MNN::ScheduleConfig key_config;
+    MNN::BackendConfig key_backendConfig;
 
-    int WIDTH = 96;
-    int HEIGHT = 96;
-    int CHANNELS = 3;
-    int THREADS = 4;
-    const float MEAN[3] = {123.0f,123.0f,123.0f};
-    const float NORMALIZATION[3] = {1.0 / 58.0f,1.0 / 58.0f , 1.0 / 58.0f};
+    int KEY_WIDTH = 96;
+    int KEY_HEIGHT = 96;
+    int KEY_CHANNELS = 3;
+    int KEY_THREADS = 2;
+    const float KEY_MEAN[3] = {0.0f,0.0f,0.0f};
+    const float KEY_NORMALIZATION[3] = {0.003921569f,0.003921569f,0.003921569f};
 };
-#endif /*Face_hpp*/
+#endif /* Face_hpp */
