@@ -29,8 +29,8 @@ private:
     MNN::ScheduleConfig config;
     MNN::BackendConfig backendConfig;
 
-    int WIDTH = 320;
-    int HEIGHT = 240;
+    int WIDTH = 96;
+    int HEIGHT = 96;
     int CHANNELS = 3;
     int THREADS = 2;
 //    const float MEAN[3] = {123.0f,123.0f,123.0f};

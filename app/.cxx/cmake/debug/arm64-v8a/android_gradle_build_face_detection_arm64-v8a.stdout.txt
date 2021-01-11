@@ -1,2 +1,3 @@
 ninja: Entering directory `/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/debug/arm64-v8a'
-ninja: no work to do.
+[1/2] Building CXX object CMakeFiles/face_detection.dir/src/main/cpp/jni.cpp.o
+[2/2] Linking CXX shared library ../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libface_detection.so
