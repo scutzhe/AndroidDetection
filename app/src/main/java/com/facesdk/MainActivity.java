@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Locale;
+import com.facesdk.Utils;
 
 import static android.content.ContentValues.TAG;
 
@@ -125,37 +126,52 @@ public class MainActivity extends Activity {
                 int width = yourSelectedImage.getWidth();
                 int height = yourSelectedImage.getHeight();
                 byte[] imageData = getPixelsRGBA(yourSelectedImage);
-                long timeDetectFace = System.currentTimeMillis();
 
                 //face_detection
-//                float faceInfo[] =  faceSDKNative.FaceDetection(imageData, width, height,4);
-//                int face_length = faceInfo.length;
-                // keyPoint_detection
-                float faceKeyPoint[] = faceSDKNative.KeyDetection(imageData, width, height,4);
-                timeDetectFace = System.currentTimeMillis() - timeDetectFace;
+                float faceInfo[] =  faceSDKNative.FaceDetection(imageData, width, height,4);
+                Bitmap drawBitmap = yourSelectedImage.copy(Bitmap.Config.ARGB_8888, true);
 
-                //Get Results
-//                Log.i(TAG,"faceInfo.length:"+faceInfo.length);
-//                for(int i=0;i<face_length/5;i++){
-//                    float score = faceInfo[5*i+4];
-//                    if(score > 0.4) {
-//                        float x_min = faceInfo[5 * i];
-//                        float y_min = faceInfo[5 * i + 1];
-//                        float x_max = faceInfo[5 * i + 2];
-//                        float y_max = faceInfo[5 * i + 3];
-//                        Log.i(TAG, "x_min,y_min,x_max,y_max,score:" + x_min + "," + y_min + "," + x_max + "," + y_max + "," + score);
-//                    }
-//               }
-                for (int i=0; i<98; i++) {
-                    //Draw rect
-                    float x = faceKeyPoint[i*2] * 96;
-                    float y = faceKeyPoint[i*2 + 1] * 96;
-                    Log.i(TAG,"x,y:"+x+","+y);
+                //canvas
+                Canvas canvas = new Canvas(drawBitmap);
+                Paint paint = new Paint();
+                paint.setColor(Color.RED);
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(1);
+
+                //get face‘s Results
+                Log.i(TAG,"faceInfo.length:"+faceInfo.length);
+                for(int i=0;i<faceInfo.length/5;i++){
+                    float score = faceInfo[5*i+4];
+                    if(score > 0.4) {
+                        float x_min = faceInfo[5 * i];
+                        float y_min = faceInfo[5 * i + 1];
+                        float x_max = faceInfo[5 * i + 2];
+                        float y_max = faceInfo[5 * i + 3];
+                        Log.i(TAG, "x_min,y_min,x_max,y_max,score:"
+                                + x_min + "," + y_min + "," + x_max + "," + y_max + "," + score);
+                        canvas.drawRect(x_min,y_min,x_max,y_max,paint);
+
+                        // keyPoint_detection
+                        int w = (int)(x_max - x_min);
+                        int h = (int)(y_max - y_min);
+                        Bitmap cropBitmap = Bitmap.createBitmap(drawBitmap,(int)x_min,(int)y_min,w,h);
+                        Log.i(TAG,"crop,width,height:"+cropBitmap.getWidth() +","+ cropBitmap.getHeight());
+                        Bitmap resizeCropBitmap = Utils.getResizedBitmap(cropBitmap, 96, 96);
+                        Log.i(TAG,"resize,width,height:"+resizeCropBitmap.getWidth() +","+ resizeCropBitmap.getHeight());
+                        byte[] resizeCropImageData = getPixelsRGBA(resizeCropBitmap);
+                        float faceKeyPoint[] = faceSDKNative.KeyDetection(resizeCropImageData,
+                                resizeCropBitmap.getWidth(), resizeCropBitmap.getHeight(),4);
+                        for (int j=0; j<98; j++) {
+                            float x = faceKeyPoint[j*2] * 96;
+                            float y = faceKeyPoint[j*2 + 1] * 96;
+                            Log.i(TAG,"x,y:"+x+","+y);
+                        }
+                        Log.i(TAG,"yaw,pitch,roll:"+faceKeyPoint[196] * 180 /Math.PI +","
+                                +faceKeyPoint[197] * 180 / Math.PI+","
+                                +faceKeyPoint[198]* 180 / Math.PI);
+                        imageView.setImageBitmap(drawBitmap);
+                    }
                 }
-                Log.i(TAG,"yaw,pitch,roll:"+faceKeyPoint[196] * 180 /Math.PI +","
-                        +faceKeyPoint[197] * 180 / Math.PI+","
-                        +faceKeyPoint[198]* 180 / Math.PI);
-
             }
         });
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
