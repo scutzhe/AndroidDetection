@@ -159,7 +159,7 @@ float* Face:: key_detection(unsigned char *image_data, int width, int height, in
     std::vector<int>dims = { 1, KEY_CHANNELS, KEY_HEIGHT, KEY_WIDTH };
     key_interpreter->resizeTensor(input_tensor, dims);
     key_interpreter->resizeSession(key_session);
-    transform.postScale(1.0f/(float)width, 1.0f/(float)height);
+    transform.postScale(1.0f/(float)KEY_WIDTH, 1.0f/(float)KEY_HEIGHT);
     transform.postScale((float)width, (float)height);
     std::unique_ptr<MNN::CV::ImageProcess> process(MNN::CV::ImageProcess::create(
             key_image_config.sourceFormat, key_image_config.destFormat, key_image_config.mean,

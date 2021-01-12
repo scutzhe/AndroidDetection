@@ -34,3 +34,8 @@
 1	444	1610421938	CMakeFiles/face_detection.dir/src/main/cpp/Face.cpp.o	e2ab1160840c33fd
 444	465	1610421938	../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libface_detection.so	b6a1ccf706790bd8
 0	2	0	clean	3305464fe52076a7
+1	375	1610429718	CMakeFiles/face_detection.dir/src/main/cpp/jni.cpp.o	a63cc9700abf892c
+1	466	1610429718	CMakeFiles/face_detection.dir/src/main/cpp/Face.cpp.o	e2ab1160840c33fd
+466	487	1610429718	../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libface_detection.so	b6a1ccf706790bd8
+0	2	0	clean	3305464fe52076a7
+0	1	0	clean	3305464fe52076a7

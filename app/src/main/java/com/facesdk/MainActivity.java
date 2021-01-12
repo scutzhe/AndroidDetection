@@ -156,16 +156,14 @@ public class MainActivity extends Activity {
                             int w = (int)(x_max - x_min);
                             int h = (int)(y_max - y_min);
                             Bitmap cropBitmap = Bitmap.createBitmap(drawBitmap,(int)x_min,(int)y_min,w,h);
-                            Log.i(TAG,"crop,width,height:"+cropBitmap.getWidth() +","+ cropBitmap.getHeight());
-                            Bitmap resizeCropBitmap = Utils.getResizedBitmap(cropBitmap, 96, 96);
-                            Log.i(TAG,"resize,width,height:"+resizeCropBitmap.getWidth() +","+ resizeCropBitmap.getHeight());
-                            byte[] resizeCropImageData = getPixelsRGBA(resizeCropBitmap);
-                            float faceKeyPoint[] = faceSDKNative.KeyDetection(resizeCropImageData,
-                                    resizeCropBitmap.getWidth(), resizeCropBitmap.getHeight(),4);
+                            byte[] cropImageData = getPixelsRGBA(cropBitmap);
+                            float faceKeyPoint[] = faceSDKNative.KeyDetection(cropImageData,
+                                    cropBitmap.getWidth(), cropBitmap.getHeight(),4);
                             for (int j=0; j<98; j++) {
-                                float x = faceKeyPoint[j*2] * 96;
-                                float y = faceKeyPoint[j*2 + 1] * 96;
-                                Log.i(TAG,"x,y:"+x+","+y);
+                                float x = faceKeyPoint[j*2] * cropBitmap.getWidth() + x_min;
+                                float y = faceKeyPoint[j*2 + 1] * cropBitmap.getHeight()+ y_min;
+//                                Log.i(TAG,"x,y:"+x+","+y);
+                                canvas.drawCircle(x,y,0.5f,paint);
                             }
                             Log.i(TAG,"yaw,pitch,roll:"+faceKeyPoint[196] * 180 /Math.PI +","
                                     +faceKeyPoint[197] * 180 / Math.PI+","
