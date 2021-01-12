@@ -13,7 +13,6 @@ static Face *face;
 bool detection_sdk_init_ok = false;
 
 extern "C" {
-
 JNIEXPORT jboolean JNICALL
 Java_com_facesdk_FaceSDKNative_FaceDetectionModelInit(JNIEnv *env, jobject instance,
                                                       jstring faceDetectionModelPath_) {
@@ -23,14 +22,14 @@ Java_com_facesdk_FaceSDKNative_FaceDetectionModelInit(JNIEnv *env, jobject insta
         return true;
     }
     jboolean tRet = false;
-    if (NULL == faceDetectionModelPath_) {
+    if (nullptr == faceDetectionModelPath_) {
         LOGD("model dir is empty");
         return tRet;
     }
 
     //get model absolute path
     const char *faceDetectionModelPath = env->GetStringUTFChars(faceDetectionModelPath_, 0);
-    if (NULL == faceDetectionModelPath) {
+    if (nullptr == faceDetectionModelPath) {
         LOGD("model dir is empty");
         return tRet;
     }
@@ -51,7 +50,7 @@ Java_com_facesdk_FaceSDKNative_FaceDetection(JNIEnv *env, jobject instance, jbyt
                                           jint imageWidth, jint imageHeight, jint imageChannel) {
     if(!detection_sdk_init_ok){
         LOGD("sdk not init");
-        return NULL;
+        return nullptr;
     }
 
     int tImageDateLen = env->GetArrayLength(imageDate_);
@@ -60,24 +59,24 @@ Java_com_facesdk_FaceSDKNative_FaceDetection(JNIEnv *env, jobject instance, jbyt
     }
     else{
         LOGD("img data format error");
-        return NULL;
+        return nullptr;
     }
 
-    jbyte *imageDate = env->GetByteArrayElements(imageDate_, NULL);
-    if (NULL == imageDate){
-        LOGD("img data is null");
-        return NULL;
+    jbyte *imageDate = env->GetByteArrayElements(imageDate_, nullptr);
+    if (nullptr == imageDate){
+        LOGD("img data is nullptr");
+        return nullptr;
     }
 
     if(imageWidth<96||imageHeight<96){
         LOGD("img is too small");
-        return NULL;
+        return nullptr;
     }
 
     //face_detection
     LOGD("imageWidth=%d, imageHeight=%d,imageChannel=%d",imageWidth,imageHeight,imageChannel);
     float* result = face ->face_detection((unsigned char*)imageDate, imageWidth, imageHeight, imageChannel);
-    int out_size = 5 * sizeof(result)/sizeof(result[0]);
+    int out_size = int(result[0]);
     jfloatArray tFaceInfo = env->NewFloatArray(out_size);
     env->SetFloatArrayRegion(tFaceInfo, 0, out_size, result);
     env->ReleaseByteArrayElements(imageDate_, imageDate, 0);
@@ -90,7 +89,7 @@ Java_com_facesdk_FaceSDKNative_KeyDetection(JNIEnv *env, jobject instance, jbyte
                                              jint imageWidth, jint imageHeight, jint imageChannel) {
     if(!detection_sdk_init_ok){
         LOGD("sdk not init");
-        return NULL;
+        return nullptr;
     }
     int tImageDateLen = env->GetArrayLength(imageDate_);
     if(imageChannel == tImageDateLen / imageWidth / imageHeight){
@@ -98,16 +97,16 @@ Java_com_facesdk_FaceSDKNative_KeyDetection(JNIEnv *env, jobject instance, jbyte
     }
     else{
         LOGD("img data format error");
-        return NULL;
+        return nullptr;
     }
-    jbyte *imageDate = env->GetByteArrayElements(imageDate_, NULL);
-    if (NULL == imageDate){
-        LOGD("img data is null");
-        return NULL;
+    jbyte *imageDate = env->GetByteArrayElements(imageDate_, nullptr);
+    if (nullptr == imageDate){
+        LOGD("img data is nullptr");
+        return nullptr;
     }
     if(imageWidth<24||imageHeight<24){
         LOGD("img is too small");
-        return NULL;
+        return nullptr;
     }
 
     //detect face

@@ -78,7 +78,7 @@ float* Face:: face_detection(unsigned char *image_data, int width, int height, i
     std::vector<int>dims = { 1, CHANNELS, HEIGHT, WIDTH };
     face_interpreter->resizeTensor(input_tensor, dims);
     face_interpreter->resizeSession(face_session);
-    transform.postScale(1.0f/(float)width, 1.0f/(float)height);
+    transform.postScale(1.0f/(float)WIDTH, 1.0f/(float)HEIGHT);
     transform.postScale((float)width, (float)height);
     std::unique_ptr<MNN::CV::ImageProcess> process(MNN::CV::ImageProcess::create(
             face_image_config.sourceFormat, face_image_config.destFormat, face_image_config.mean,
@@ -134,15 +134,23 @@ float* Face:: face_detection(unsigned char *image_data, int width, int height, i
         }
     }
     std::vector<FaceInfo>res = NMS(boxes_tmp,nms_threshold);
-    auto result = new float[5*res.size()];
-    for(int i=0;i<res.size();i++){
-        result[5*i] = res[i].x_min;
-        result[5*i+1] = res[i].y_min;
-        result[5*i+2] = res[i].x_max;
-        result[5*i+3] = res[i].y_max;
-        result[5*i+4] = res[i].score;
+    if(res.size()!=0){
+        int num = int(5*res.size()+1);
+        auto result = new float[num];
+        for(int i=0;i<res.size();i++){
+            result[5*i] = float(num);
+            result[5*i+1] = res[i].x_min;
+            result[5*i+2] = res[i].y_min;
+            result[5*i+3] = res[i].x_max;
+            result[5*i+4] = res[i].y_max;
+            result[5*i+5] = res[i].score;
+        }
+        return result;
     }
-    return result;
+    else{
+        auto result = new float[1]{4};
+        return result ;
+    }
 }
 
 float* Face:: key_detection(unsigned char *image_data, int width, int height, int channel) {
