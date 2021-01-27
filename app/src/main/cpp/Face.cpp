@@ -4,7 +4,10 @@ Face::Face(const std::string face_mnn_path,const std::string key_mnn_path){
     //face_detection
     //model_configuration
     face_interpreter = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromFile(face_mnn_path.c_str()));
-    face_config.type = static_cast<MNNForwardType>(MNN_FORWARD_CPU);
+//    face_config.type = static_cast<MNNForwardType>(MNN_FORWARD_CPU);
+//    face_config.type = static_cast<MNNForwardType>(MNN_FORWARD_VULKAN);
+//    face_config.type = static_cast<MNNForwardType>(MNN_FORWARD_AUTO);
+    face_config.type = static_cast<MNNForwardType>(MNN_FORWARD_ALL);
     face_config.numThread = THREADS;
     face_backendConfig.precision = (MNN::BackendConfig::PrecisionMode)0;
     face_config.backendConfig = &face_backendConfig;
@@ -19,7 +22,10 @@ Face::Face(const std::string face_mnn_path,const std::string key_mnn_path){
     //key_detection
     //model_configuration
     key_interpreter = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromFile(key_mnn_path.c_str()));
-    key_config.type = static_cast<MNNForwardType>(MNN_FORWARD_CPU);
+//    key_config.type = static_cast<MNNForwardType>(MNN_FORWARD_CPU);
+//    key_config.type = static_cast<MNNForwardType>(MNN_FORWARD_VULKAN);
+//    key_config.type = static_cast<MNNForwardType>(MNN_FORWARD_AUTO);
+    key_config.type = static_cast<MNNForwardType>(MNN_FORWARD_ALL);
     key_config.numThread = KEY_THREADS;
     key_backendConfig.precision = (MNN::BackendConfig::PrecisionMode)0;
     key_config.backendConfig = &key_backendConfig;

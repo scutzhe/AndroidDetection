@@ -26,6 +26,7 @@ import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -82,7 +83,11 @@ public class MainActivity extends Activity {
         //copy model
         try {
             copyBigDataToSD("face.mnn");
-            copyBigDataToSD("key_cpu.mnn");
+//            copyBigDataToSD("face_quant.mnn");
+//            copyBigDataToSD("key_cpu.mnn");
+            copyBigDataToSD("key_vulkan.mnn");
+//            copyBigDataToSD("key_arm82.mnn");
+//            copyBigDataToSD("key_all.mnn");
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -92,54 +97,45 @@ public class MainActivity extends Activity {
         String sdPath = sdDir.toString() + "/facesdk/";
         faceSDKNative.FaceDetectionModelInit(sdPath);
 
-        //save picture
-        String imageDir = sdDir.toString() + "/facesdk/images";
+        // do one test
+        String tmpImagePath = "/storage/emulated/0/face/0000.jpg";
+        try{
+            FileInputStream tmpInput = new FileInputStream(tmpImagePath);
+            Bitmap tmpBitmap = BitmapFactory.decodeStream(tmpInput);
+            int tmpWidth = tmpBitmap.getWidth();
+            int tmpHeight = tmpBitmap.getHeight();
+//                Log.i(TAG,"width,height:"+width+","+height);
+            byte[] tmpImageData = getPixelsRGBA(tmpBitmap);
+            // do FaceDetection
+            float faceInfo[] =  faceSDKNative.FaceDetection(tmpImageData, tmpWidth, tmpHeight,4);
+//            Log.i(TAG,"faceNum:"+faceInfo.length);
+        }catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        ////do batch test
+        String imageDir = sdDir.toString() + "/face/";
+//        Log.i(TAG, "imageDir:"+imageDir);
         File file = new File(imageDir);
-        if(!file.exists()){
-            file.mkdir();
-        }
-        Log.i(TAG,"imageDir:"+imageDir);
-        File[] fs = file.listFiles();
-        if(fs.length !=0){
-            for(File f:fs){
-                String imagePath = f.getAbsolutePath();
-                Log.i(TAG,"imagePath:"+imagePath);
-            }
-        }
-        infoResult = (TextView) findViewById(R.id.infoResult);
-        imageView = (ImageView) findViewById(R.id.imageView);
-
-        Button buttonImage = (Button) findViewById(R.id.buttonImage);
-        buttonImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                Intent i = new Intent(Intent.ACTION_PICK);
-                i.setType("image/*");
-                startActivityForResult(i, SELECT_IMAGE);
-            }
-        });
-        Button buttonDetect = (Button) findViewById(R.id.buttonDetect);
-        buttonDetect.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                if (yourSelectedImage == null)
-                    return;
-                int width = yourSelectedImage.getWidth();
-                int height = yourSelectedImage.getHeight();
-                byte[] imageData = getPixelsRGBA(yourSelectedImage);
-                //face_detection
-                float faceInfo[] =  faceSDKNative.FaceDetection(imageData, width,height,4);
-                Bitmap drawBitmap = yourSelectedImage.copy(Bitmap.Config.ARGB_8888, true);
-
-                //canvas
-                Canvas canvas = new Canvas(drawBitmap);
-                Paint paint = new Paint();
-                paint.setColor(Color.RED);
-                paint.setStyle(Paint.Style.STROKE);
-                paint.setStrokeWidth(1);
-
-                //get face‘s Results
-                Log.i(TAG,"face_num:"+((int)faceInfo[0]/5));
+        File[] names = file.listFiles();
+        String imagePath = "";
+        int index = 0;
+        long totalTime = 0;
+        for(File name:names) {
+            index += 1;
+            imagePath = "" + name;
+//            Log.i(TAG, "imagePath:"+imagePath);
+            try {
+                FileInputStream input = new FileInputStream(imagePath);
+                Bitmap bitmap = BitmapFactory.decodeStream(input);
+                int width = bitmap.getWidth();
+                int height = bitmap.getHeight();
+//                Log.i(TAG,"image input width,height:"+width+","+height);
+                long startTime = System.currentTimeMillis();
+                byte[] imageData = getPixelsRGBA(bitmap);
+                // do FaceDetection
+                float faceInfo[] =  faceSDKNative.FaceDetection(imageData, width, height,4);
+//                Log.i(TAG,"numFace:"+faceInfo.length);
                 if(faceInfo[0] >=1){
                     for(int i=0;i<(int)faceInfo[0]/5;i++){
                         float score = faceInfo[5*i+5];
@@ -148,37 +144,97 @@ public class MainActivity extends Activity {
                             float y_min = faceInfo[5 * i + 2];
                             float x_max = faceInfo[5 * i + 3];
                             float y_max = faceInfo[5 * i + 4];
-                            Log.i(TAG, "x_min,y_min,x_max,y_max,score:"
-                                    + x_min + "," + y_min + "," + x_max + "," + y_max + "," + score);
-                            canvas.drawRect(x_min,y_min,x_max,y_max,paint);
-
-                            // keyPoint_detection
                             int w = (int)(x_max - x_min);
                             int h = (int)(y_max - y_min);
-                            Bitmap cropBitmap = Bitmap.createBitmap(drawBitmap,(int)x_min,(int)y_min,w,h);
+                            Bitmap cropBitmap = Bitmap.createBitmap(bitmap,(int)x_min,(int)y_min,w,h);
                             byte[] cropImageData = getPixelsRGBA(cropBitmap);
                             float faceKeyPoint[] = faceSDKNative.KeyDetection(cropImageData,
                                     cropBitmap.getWidth(), cropBitmap.getHeight(),4);
-                            for (int j=0; j<98; j++) {
-                                float x = faceKeyPoint[j*2] * cropBitmap.getWidth() + x_min;
-                                float y = faceKeyPoint[j*2 + 1] * cropBitmap.getHeight()+ y_min;
-//                                Log.i(TAG,"x,y:"+x+","+y);
-                                canvas.drawCircle(x,y,0.5f,paint);
-                            }
-                            Log.i(TAG,"yaw,pitch,roll:"+faceKeyPoint[196] * 180 /Math.PI +","
-                                    +faceKeyPoint[197] * 180 / Math.PI+","
-                                    +faceKeyPoint[198]* 180 / Math.PI);
-                            imageView.setImageBitmap(drawBitmap);
+//                            Log.i(TAG,"faceKeyPoint length:"+faceKeyPoint.length);
                         }
                     }
                 }
-                else {
-                    Log.i(TAG,"no face");
-                }
+                long singleTime = System.currentTimeMillis()- startTime;
+                totalTime += singleTime;
+            } catch (FileNotFoundException e) {
+                e.printStackTrace(); }
+        }
+        Log.i(TAG,"test times:"+index);
+        Log.i(TAG,"timeCost:"+totalTime/index);
 
-            }
-        });
-        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+//        infoResult = (TextView) findViewById(R.id.infoResult);
+//        imageView = (ImageView) findViewById(R.id.imageView);
+//
+//        Button buttonImage = (Button) findViewById(R.id.buttonImage);
+//        buttonImage.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View arg0) {
+//                Intent i = new Intent(Intent.ACTION_PICK);
+//                i.setType("image/*");
+//                startActivityForResult(i, SELECT_IMAGE);
+//            }
+//        });
+//        Button buttonDetect = (Button) findViewById(R.id.buttonDetect);
+//        buttonDetect.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View arg0) {
+//                if (yourSelectedImage == null)
+//                    return;
+//                int width = yourSelectedImage.getWidth();
+//                int height = yourSelectedImage.getHeight();
+//                byte[] imageData = getPixelsRGBA(yourSelectedImage);
+//                //face_detection
+//                float faceInfo[] =  faceSDKNative.FaceDetection(imageData, width,height,4);
+//                Bitmap drawBitmap = yourSelectedImage.copy(Bitmap.Config.ARGB_8888, true);
+//
+//                //canvas
+//                Canvas canvas = new Canvas(drawBitmap);
+//                Paint paint = new Paint();
+//                paint.setColor(Color.RED);
+//                paint.setStyle(Paint.Style.STROKE);
+//                paint.setStrokeWidth(1);
+//
+//                //get face‘s Results
+//                Log.i(TAG,"face_num:"+((int)faceInfo[0]/5));
+//                if(faceInfo[0] >=1){
+//                    for(int i=0;i<(int)faceInfo[0]/5;i++){
+//                        float score = faceInfo[5*i+5];
+//                        if(score > 0.3) {
+//                            float x_min = faceInfo[5 * i + 1];
+//                            float y_min = faceInfo[5 * i + 2];
+//                            float x_max = faceInfo[5 * i + 3];
+//                            float y_max = faceInfo[5 * i + 4];
+//                            Log.i(TAG, "x_min,y_min,x_max,y_max,score:"
+//                                    + x_min + "," + y_min + "," + x_max + "," + y_max + "," + score);
+//                            canvas.drawRect(x_min,y_min,x_max,y_max,paint);
+//
+//                            // keyPoint_detection
+//                            int w = (int)(x_max - x_min);
+//                            int h = (int)(y_max - y_min);
+//                            Bitmap cropBitmap = Bitmap.createBitmap(drawBitmap,(int)x_min,(int)y_min,w,h);
+//                            byte[] cropImageData = getPixelsRGBA(cropBitmap);
+//                            float faceKeyPoint[] = faceSDKNative.KeyDetection(cropImageData,
+//                                    cropBitmap.getWidth(), cropBitmap.getHeight(),4);
+//                            for (int j=0; j<98; j++) {
+//                                float x = faceKeyPoint[j*2] * cropBitmap.getWidth() + x_min;
+//                                float y = faceKeyPoint[j*2 + 1] * cropBitmap.getHeight()+ y_min;
+////                                Log.i(TAG,"x,y:"+x+","+y);
+//                                canvas.drawCircle(x,y,0.5f,paint);
+//                            }
+//                            Log.i(TAG,"yaw,pitch,roll:"+faceKeyPoint[196] * 180 /Math.PI +","
+//                                    +faceKeyPoint[197] * 180 / Math.PI+","
+//                                    +faceKeyPoint[198]* 180 / Math.PI);
+//                            imageView.setImageBitmap(drawBitmap);
+//                        }
+//                    }
+//                }
+//                else {
+//                    Log.i(TAG,"no face");
+//                }
+//
+//            }
+//        });
+//        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     @Override

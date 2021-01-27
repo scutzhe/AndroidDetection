@@ -50,13 +50,13 @@ private:
     int WIDTH = 128;
     int HEIGHT = 128;
     int CHANNELS = 3;
-    int THREADS = 2;
+    int THREADS = 4;
     int OUTPUT_NUM = 960;
     float X_SCALE = 10.0;
     float Y_SCALE = 10.0;
     float H_SCALE = 5.0;
     float W_SCALE = 5.0;
-    float score_threshold = 0.3f;
+    float score_threshold = 0.45f;
     float nms_threshold = 0.45f;
     const float MEAN[3] = {0.0f,0.0f,0.0f};
     const float NORMALIZATION[3] = {0.003921569f,0.003921569f,0.003921569f};
@@ -71,7 +71,7 @@ private:
     int KEY_WIDTH = 96;
     int KEY_HEIGHT = 96;
     int KEY_CHANNELS = 3;
-    int KEY_THREADS = 2;
+    int KEY_THREADS = 4;
     const float KEY_MEAN[3] = {0.0f,0.0f,0.0f};
     const float KEY_NORMALIZATION[3] = {0.003921569f,0.003921569f,0.003921569f};
 };

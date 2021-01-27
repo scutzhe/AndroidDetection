@@ -37,7 +37,11 @@ Java_com_facesdk_FaceSDKNative_FaceDetectionModelInit(JNIEnv *env, jobject insta
     string tFaceModelDir = faceDetectionModelPath;
     string tLastChar = tFaceModelDir.substr(tFaceModelDir.length()-1, 1);
     string str_face = tFaceModelDir + "face.mnn";
-    string str_keyPoint = tFaceModelDir + "key_cpu.mnn";
+//    string str_face = tFaceModelDir + "face_quant.mnn";
+//    string str_keyPoint = tFaceModelDir + "key_cpu.mnn";
+    string str_keyPoint = tFaceModelDir + "key_vulkan.mnn";
+//    string str_keyPoint = tFaceModelDir + "key_arm82.mnn";
+//    string str_keyPoint = tFaceModelDir + "key_all.mnn";
     face = new  Face(str_face, str_keyPoint);
     env->ReleaseStringUTFChars(faceDetectionModelPath_, faceDetectionModelPath);
     detection_sdk_init_ok = true;
