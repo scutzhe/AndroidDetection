@@ -32,7 +32,7 @@ private:
     int WIDTH = 96;
     int HEIGHT = 96;
     int CHANNELS = 3;
-    int THREADS = 2;
+    int THREADS = 4;
 //    const float MEAN[3] = {123.0f,123.0f,123.0f};
 //    const float NORMALIZATION[3] = {58.0f,58.0f,58.0f};
     const float MEAN[3] = {0.0f,0.0f,0.0f};

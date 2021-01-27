@@ -31,6 +31,8 @@ Java_com_facesdk_FaceSDKNative_FaceDetectionModelInit(JNIEnv *env, jobject insta
     }
     string tFaceModelDir = faceDetectionModelPath;
     string tLastChar = tFaceModelDir.substr(tFaceModelDir.length()-1, 1);
+//    string model_path = tFaceModelDir + "nme_min_aug_96_all.mnn";
+//    string model_path = tFaceModelDir + "nme_min_aug_96_arm82.mnn";
 //    string model_path = tFaceModelDir + "nme_min_aug_vulkan.mnn";
     string model_path = tFaceModelDir + "nme_min_aug_96_cpu.mnn";
     face_keypoint = new  Face(model_path);

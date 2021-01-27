@@ -3,8 +3,9 @@
 Face::Face(std::string mnn_path){
     //model_configuration
     key_interpreter = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromFile(mnn_path.c_str()));
-    config.type = static_cast<MNNForwardType>(MNN_FORWARD_CPU);
+//    config.type = static_cast<MNNForwardType>(MNN_FORWARD_CPU);
 //    config.type = static_cast<MNNForwardType>(MNN_FORWARD_VULKAN);
+    config.type = static_cast<MNNForwardType>(MNN_FORWARD_AUTO);
     config.numThread = THREADS;
     backendConfig.precision = (MNN::BackendConfig::PrecisionMode)0;
     config.backendConfig = &backendConfig;
