@@ -3,7 +3,10 @@
 Face::Face(std::string mnn_path){
     //model_configuration
     face_interpreter = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromFile(mnn_path.c_str()));
-    config.type = static_cast<MNNForwardType>(MNN_FORWARD_CPU);
+//    config.type = static_cast<MNNForwardType>(MNN_FORWARD_CPU);
+//    config.type = static_cast<MNNForwardType>(MNN_FORWARD_VULKAN);
+    config.type = static_cast<MNNForwardType>(MNN_FORWARD_AUTO);
+//    config.type = static_cast<MNNForwardType>(MNN_FORWARD_ALL);
     config.numThread = THREADS;
     backendConfig.precision = (MNN::BackendConfig::PrecisionMode)0;
     config.backendConfig = &backendConfig;
@@ -62,7 +65,7 @@ float* Face:: detection(unsigned char *image_data, int width, int height, int ch
     std::vector<int>dims = { 1, CHANNELS, HEIGHT, WIDTH };
     face_interpreter->resizeTensor(input_tensor, dims);
     face_interpreter->resizeSession(face_session);
-    transform.postScale(1.0f/(float)width, 1.0f/(float)height);
+    transform.postScale(1.0f/(float)WIDTH, 1.0f/(float)HEIGHT);
     transform.postScale((float)width, (float)height);
     std::unique_ptr<MNN::CV::ImageProcess> process(MNN::CV::ImageProcess::create(
             image_config.sourceFormat, image_config.destFormat, image_config.mean,
@@ -118,15 +121,21 @@ float* Face:: detection(unsigned char *image_data, int width, int height, int ch
         }
     }
     std::vector<FaceInfo>res = NMS(boxes_tmp,nms_threshold);
-    auto result = new float[5*res.size()];
-    for(int i=0;i<res.size();i++){
-        result[5*i] = res[i].x_min;
-        result[5*i+1] = res[i].y_min;
-        result[5*i+2] = res[i].x_max;
-        result[5*i+3] = res[i].y_max;
-        result[5*i+4] = res[i].score;
-        LOGD("x_min=%.4f,y_min=%.4f,x_max=%.4f,y_max=%.4f,score=%.4f",
-                res[i].x_min,res[i].y_min,res[i].x_max,res[i].y_max,res[i].score);
+    if(res.size()!=0){
+        int num = int(5*res.size()+1);
+        auto result = new float[num];
+        for(int i=0;i<res.size();i++){
+            result[5*i] = float(num);
+            result[5*i+1] = res[i].x_min;
+            result[5*i+2] = res[i].y_min;
+            result[5*i+3] = res[i].x_max;
+            result[5*i+4] = res[i].y_max;
+            result[5*i+5] = res[i].score;
+        }
+        return result;
     }
-    return result;
+    else{
+        auto result = new float[1]{4};
+        return result ;
+    }
 }

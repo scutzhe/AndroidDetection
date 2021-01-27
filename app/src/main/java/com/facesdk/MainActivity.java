@@ -24,6 +24,7 @@ import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -77,6 +78,7 @@ public class MainActivity extends Activity {
         //copy model
         try {
 //            copyBigDataToSD("face.mnn");
+//            copyBigDataToSD("face.mnn");
             copyBigDataToSD("face_quant.mnn");
         } catch (IOException e) {
             e.printStackTrace();
@@ -86,55 +88,108 @@ public class MainActivity extends Activity {
         String sdPath = sdDir.toString() + "/facesdk/";
 //        Log.i(TAG, "sdPath:"+sdPath);
         faceSDKNative.FaceDetectionModelInit(sdPath);
-        infoResult = (TextView) findViewById(R.id.infoResult);
-        imageView = (ImageView) findViewById(R.id.imageView);
-        Button buttonImage = (Button) findViewById(R.id.buttonImage);
-        buttonImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                Intent i = new Intent(Intent.ACTION_PICK);
-                i.setType("image/*");
-                startActivityForResult(i, SELECT_IMAGE);
-            }
-        });
-        Button buttonDetect = (Button) findViewById(R.id.buttonDetect);
-        buttonDetect.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                if (yourSelectedImage == null)
-                    return;
-                int width = yourSelectedImage.getWidth();
-                int height = yourSelectedImage.getHeight();
-                Log.i(TAG,"width,height:"+width+","+height);
-                byte[] imageDate = getPixelsRGBA(yourSelectedImage);
 
-                long timeDetectFace = System.currentTimeMillis();
-                //do FaceDetection
-                Log.i(TAG, " start detection ...");
-                float faceKeyPoint[] =  faceSDKNative.FaceDetection(imageDate, width, height,4);
-                Log.i(TAG,"keyPoint_size:"+faceKeyPoint.length);
-                timeDetectFace = System.currentTimeMillis() - timeDetectFace;
+        // do one test
+        String tmpImagePath = "/storage/emulated/0/face/0000.jpg";
+        try{
+            FileInputStream tmpInput = new FileInputStream(tmpImagePath);
+            Bitmap tmpBitmap = BitmapFactory.decodeStream(tmpInput);
+            int tmpWidth = tmpBitmap.getWidth();
+            int tmpHeight = tmpBitmap.getHeight();
+//                Log.i(TAG,"width,height:"+width+","+height);
+            byte[] tmpImageData = getPixelsRGBA(tmpBitmap);
+            // do FaceDetection
+            float faceInfo[] =  faceSDKNative.FaceDetection(tmpImageData, tmpWidth, tmpHeight,4);
+//            Log.i(TAG,"faceNum:"+faceInfo.length);
+        }catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
 
-                //Get Results
-               infoResult.setText("time cost："+timeDetectFace+"ms");
-               Log.i(TAG, "time cost："+timeDetectFace);
-               Bitmap drawBitmap = yourSelectedImage.copy(Bitmap.Config.ARGB_8888, true);
-               int length = faceKeyPoint.length;
-               Log.i(TAG,"length:"+faceKeyPoint.length);
-               for(int i=0;i<length/5;i++){
-                   float score = faceKeyPoint[5*i+4];
-                   if(score > 0.4){
-                       float x_min = faceKeyPoint[5*i];
-                       float y_min = faceKeyPoint[5*i+1];
-                       float x_max = faceKeyPoint[5*i+2];
-                       float y_max = faceKeyPoint[5*i+3];
-                       Log.i(TAG,"x_min,y_min,x_max,y_max,score:"+x_min+","+y_min+","+x_max+","+y_max+","+score);
-                   }
-               }
+        ////do batch test
+        String imageDir = sdDir.toString() + "/face/";
+//        Log.i(TAG, "imageDir:"+imageDir);
+        File file = new File(imageDir);
+        File[] names = file.listFiles();
+        String imagePath = "";
+        int index = 0;
+        long totalTime = 0;
+        for(File name:names) {
+            index += 1;
+            imagePath = "" + name;
+//            Log.i(TAG, "imagePath:"+imagePath);
+            try {
+                FileInputStream input = new FileInputStream(imagePath);
+                Bitmap bitmap = BitmapFactory.decodeStream(input);
+                int width = bitmap.getWidth();
+                int height = bitmap.getHeight();
+//                Log.i(TAG,"image input width,height:"+width+","+height);
+                long startTime = System.currentTimeMillis();
+                byte[] imageData = getPixelsRGBA(bitmap);
+                // do FaceDetection
+                float faceInfo[] =  faceSDKNative.FaceDetection(imageData, width, height,4);
+//                Log.i(TAG,"numFace:"+faceInfo[0]);
+                long singleTime = System.currentTimeMillis()- startTime;
+                totalTime += singleTime;
+            } catch (FileNotFoundException e) {
+                e.printStackTrace(); }
+        }
+        Log.i(TAG,"test times:"+index);
+        Log.i(TAG,"timeCost:"+totalTime/index);
 
-                imageView.setImageBitmap(drawBitmap);
-            }
-        });
+//        infoResult = (TextView) findViewById(R.id.infoResult);
+//        imageView = (ImageView) findViewById(R.id.imageView);
+//        Button buttonImage = (Button) findViewById(R.id.buttonImage);
+//        buttonImage.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View arg0) {
+//                Intent i = new Intent(Intent.ACTION_PICK);
+//                i.setType("image/*");
+//                startActivityForResult(i, SELECT_IMAGE);
+//            }
+//        });
+//        Button buttonDetect = (Button) findViewById(R.id.buttonDetect);
+//        buttonDetect.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View arg0) {
+//                if (yourSelectedImage == null)
+//                    return;
+//                int width = yourSelectedImage.getWidth();
+//                int height = yourSelectedImage.getHeight();
+//                Log.i(TAG,"width,height:"+width+","+height);
+//                byte[] imageDate = getPixelsRGBA(yourSelectedImage);
+//
+//                long timeDetectFace = System.currentTimeMillis();
+//                //do FaceDetection
+//                Log.i(TAG, " start detection ...");
+//                float faceInfo[] =  faceSDKNative.FaceDetection(imageDate, width, height,4);
+//                timeDetectFace = System.currentTimeMillis() - timeDetectFace;
+//
+//                //Get Results
+//               infoResult.setText("time cost："+timeDetectFace+"ms");
+//               Log.i(TAG, "time cost："+timeDetectFace);
+//               Bitmap drawBitmap = yourSelectedImage.copy(Bitmap.Config.ARGB_8888, true);
+//               //canvas
+//                Canvas canvas = new Canvas(drawBitmap);
+//                Paint paint = new Paint();
+//                paint.setColor(Color.RED);
+//                paint.setStyle(Paint.Style.STROKE);
+//                paint.setStrokeWidth(1);
+//
+//               if(faceInfo[0]>=1){
+//                   for(int i=0;i<(int)faceInfo[0]/5;i++){
+//                       float score = faceInfo[5*i+5];
+//                       if(score > 0.3) {
+//                           float x_min = faceInfo[5 * i + 1];
+//                           float y_min = faceInfo[5 * i + 2];
+//                           float x_max = faceInfo[5 * i + 3];
+//                           float y_max = faceInfo[5 * i + 4];
+//                           canvas.drawRect(x_min,y_min,x_max,y_max,paint);
+//                       }
+//                   }
+//               }
+//                imageView.setImageBitmap(drawBitmap);
+//            }
+//        });
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();

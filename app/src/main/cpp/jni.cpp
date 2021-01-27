@@ -68,11 +68,10 @@ Java_com_facesdk_FaceSDKNative_FaceDetection(JNIEnv *env, jobject instance, jbyt
     //detect face
     LOGD("imageWidth=%d, imageHeight=%d,imageChannel=%d",imageWidth,imageHeight,imageChannel);
     float* result = face_detection ->detection((unsigned char*)imageDate, imageWidth, imageHeight, imageChannel);
-    int out_size = 5 * sizeof(result)/sizeof(result[0]);
+    int out_size = int(result[0]);
     jfloatArray tFaceInfo = env->NewFloatArray(out_size);
     env->SetFloatArrayRegion(tFaceInfo, 0, out_size, result);
     env->ReleaseByteArrayElements(imageDate_, imageDate, 0);
-//    delete [] result;
     return tFaceInfo;
 }
 
