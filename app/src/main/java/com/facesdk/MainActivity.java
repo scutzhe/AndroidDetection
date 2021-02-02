@@ -6,31 +6,25 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.lang.Math;
 
 import static android.content.ContentValues.TAG;
 
@@ -70,51 +64,78 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         // For API 23+ you need to request the read/write permissions even if they are already in your manifest.
-        int currentapiVersion = android.os.Build.VERSION.SDK_INT;
+        int currentapiVersion = Build.VERSION.SDK_INT;
         if (currentapiVersion >= Build.VERSION_CODES.M) {
             verifyPermissions(this);
         }
 
         //copy model
         try {
-//            copyBigDataToSD("nme_min_aug_96_all.mnn");
-//            copyBigDataToSD("nme_min_aug_96_arm82.mnn");
-//            copyBigDataToSD("nme_min_aug_vulkan.mnn");
-//            copyBigDataToSD("nme_min_aug_gpu.mnn");
             copyBigDataToSD("nme_min_aug_96_cpu.mnn");
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+        // 获取外部文件夹
         File sdDir = Environment.getExternalStorageDirectory();//get model store dir
+        // facesdk's dir store model'file
         String sdPath = sdDir.toString() + "/facesdk/";
-        Log.i(TAG, "sdPath:"+sdPath);
         faceSDKNative.FaceDetectionModelInit(sdPath);
 
+         // store result'file
+//        String txtDir = sdDir.toString() + "/results/";
+//        File fileTxtDir = null;
+//        try{
+//            fileTxtDir = new File(txtDir);
+//            if(!fileTxtDir.exists()){
+//                fileTxtDir.mkdir();
+//            }
+//        } catch (Exception e){
+//            e.printStackTrace();
+//        }
+//        Log.i(TAG,"results:"+txtDir);
+//        String filePath = txtDir + "/" + "result_arm82.txt";
+//        File fileTxt = null;
+//        try{
+//            fileTxt = new File(filePath);
+//            if(!fileTxt.exists()){
+//                fileTxt.createNewFile();
+//            }
+//        }catch (Exception e){
+//            e.printStackTrace();
+//        }
+//        FileWriter writer = null;
+
         // do one test
-        String tmpImagePath = "/storage/emulated/0/test/image00150.jpg";
+        String tmpImagePath = "/storage/emulated/0/test_face/01.jpg";
         try{
             FileInputStream tmpInput = new FileInputStream(tmpImagePath);
             Bitmap tmpBitmap = BitmapFactory.decodeStream(tmpInput);
             int tmpWidth = tmpBitmap.getWidth();
             int tmpHeight = tmpBitmap.getHeight();
-//                Log.i(TAG,"width,height:"+width+","+height);
             byte[] tmpImageData = getPixelsRGBA(tmpBitmap);
-            // do FaceDetection
             float faceKeyPoint[] =  faceSDKNative.FaceDetection(tmpImageData, tmpWidth, tmpHeight,4);
+//            for(int i=0;i<faceKeyPoint.length;i++){
+//                Log.i(TAG,"feature="+faceKeyPoint[i]);
+//                writer = new FileWriter(fileTxt, true);
+//                writer.append(Float.toString(faceKeyPoint[i]) + "\r\n");
+//                writer.flush();
+//            }
         }catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+//        catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
         ////do batch test
-        String imageDir = sdDir.toString() + "/test/";
-//        Log.i(TAG, "imageDir:"+imageDir);
+        String imageDir = sdDir.toString() + "/test_face/";
         File file = new File(imageDir);
         File[] names = file.listFiles();
         String imagePath = "";
         int index = 0;
         long startTime = System.currentTimeMillis();
-        for(File name:names) {
+        for (File name : names) {
             index += 1;
             imagePath = "" + name;
 //            Log.i(TAG, "imagePath:"+imagePath);
@@ -126,15 +147,17 @@ public class MainActivity extends Activity {
 //                Log.i(TAG,"width,height:"+width+","+height);
                 byte[] imageData = getPixelsRGBA(bitmap);
                 // do FaceDetection
-                float faceKeyPoint[] =  faceSDKNative.FaceDetection(imageData, width, height,4);
+                float faceKeyPoint[] = faceSDKNative.FaceDetection(imageData, width, height, 4);
 //                Log.i(TAG,"keyPoint_size:"+faceKeyPoint.length);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
         }
         long timeTotal = System.currentTimeMillis() - startTime;
+        Log.i(TAG,"index:"+index);
         Log.i(TAG,"timeCost:"+timeTotal/index);
 
+          ////do single test
 //        infoResult = (TextView) findViewById(R.id.infoResult);
 //        imageView = (ImageView) findViewById(R.id.imageView);
 //        Button buttonImage = (Button) findViewById(R.id.buttonImage);
@@ -192,7 +215,6 @@ public class MainActivity extends Activity {
 //        // See https://g.co/AppIndexing/AndroidStudio for more information.
 //        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
