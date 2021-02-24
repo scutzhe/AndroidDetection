@@ -26,7 +26,7 @@
           "workingDirectoryOrdinal": 0
         },
         {
-          "src": "/home/zhex/git_me/AndroidDetection/app/src/main/cpp/Face.cpp",
+          "src": "/home/zhex/git_me/AndroidDetection/app/src/main/cpp/litedet.cpp",
           "flagsOrdinal": 1,
           "workingDirectoryOrdinal": 0
         }
