@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.widget.ImageView;
@@ -28,6 +29,7 @@ import java.nio.ByteBuffer;
 
 import static android.content.ContentValues.TAG;
 
+@RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
 public class MainActivity extends Activity {
     private static final int SELECT_IMAGE = 1;
 
@@ -43,7 +45,7 @@ public class MainActivity extends Activity {
     private GoogleApiClient client;
 
     //Check Permissions
-    private static final int REQUEST_CODE_PERMISSION = 2;
+    private static final int REQUEST_CODE_PERMISSION = 1;
     private static String[] PERMISSIONS_REQ = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -64,14 +66,14 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         // For API 23+ you need to request the read/write permissions even if they are already in your manifest.
-        int currentapiVersion = Build.VERSION.SDK_INT;
-        if (currentapiVersion >= Build.VERSION_CODES.M) {
+        int currentApiVersion = Build.VERSION.SDK_INT;
+        if (currentApiVersion >= Build.VERSION_CODES.M) {
             verifyPermissions(this);
         }
 
         //copy model
         try {
-            copyBigDataToSD("nme_min_aug_96_cpu.mnn");
+            copyBigDataToSD("mobilenet_v2_arm82.mnn");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -82,7 +84,7 @@ public class MainActivity extends Activity {
         String sdPath = sdDir.toString() + "/facesdk/";
         faceSDKNative.FaceDetectionModelInit(sdPath);
 
-         // store result'file
+        // store result'file
 //        String txtDir = sdDir.toString() + "/results/";
 //        File fileTxtDir = null;
 //        try{
@@ -107,21 +109,21 @@ public class MainActivity extends Activity {
 //        FileWriter writer = null;
 
         // do one test
-        String tmpImagePath = "/storage/emulated/0/test_face/01.jpg";
-        try{
+        String tmpImagePath = "/storage/emulated/0/test/image00002.jpg";
+        try {
             FileInputStream tmpInput = new FileInputStream(tmpImagePath);
             Bitmap tmpBitmap = BitmapFactory.decodeStream(tmpInput);
             int tmpWidth = tmpBitmap.getWidth();
             int tmpHeight = tmpBitmap.getHeight();
             byte[] tmpImageData = getPixelsRGBA(tmpBitmap);
-            float faceKeyPoint[] =  faceSDKNative.FaceDetection(tmpImageData, tmpWidth, tmpHeight,4);
+            float faceKeyPoint[] = faceSDKNative.FaceDetection(tmpImageData, tmpWidth, tmpHeight, 4);
 //            for(int i=0;i<faceKeyPoint.length;i++){
 //                Log.i(TAG,"feature="+faceKeyPoint[i]);
 //                writer = new FileWriter(fileTxt, true);
 //                writer.append(Float.toString(faceKeyPoint[i]) + "\r\n");
 //                writer.flush();
 //            }
-        }catch (FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
 //        catch (IOException e) {
@@ -129,7 +131,7 @@ public class MainActivity extends Activity {
 //        }
 
         ////do batch test
-        String imageDir = sdDir.toString() + "/test_face/";
+        String imageDir = sdDir.toString() + "/test/";
         File file = new File(imageDir);
         File[] names = file.listFiles();
         String imagePath = "";
@@ -154,10 +156,10 @@ public class MainActivity extends Activity {
             }
         }
         long timeTotal = System.currentTimeMillis() - startTime;
-        Log.i(TAG,"index:"+index);
-        Log.i(TAG,"timeCost:"+timeTotal/index);
+        Log.i(TAG, "index:" + index);
+        Log.i(TAG, "timeCost:" + timeTotal / index);
 
-          ////do single test
+        ////do single test
 //        infoResult = (TextView) findViewById(R.id.infoResult);
 //        imageView = (ImageView) findViewById(R.id.imageView);
 //        Button buttonImage = (Button) findViewById(R.id.buttonImage);
@@ -277,19 +279,19 @@ public class MainActivity extends Activity {
 
     private void copyBigDataToSD(String strOutFileName) throws IOException {
         File sdDir = Environment.getExternalStorageDirectory();//get root dir
-        File file = new File(sdDir.toString()+"/facesdk/");
+        File file = new File(sdDir.toString() + "/facesdk/");
         if (!file.exists()) {
             file.mkdir();
         }
 
-        String tmpFile = sdDir.toString()+"/facesdk/" + strOutFileName;
+        String tmpFile = sdDir.toString() + "/facesdk/" + strOutFileName;
         File f = new File(tmpFile);
         if (f.exists()) {
             Log.i(TAG, "file exists " + strOutFileName);
             return;
         }
         InputStream myInput;
-        java.io.OutputStream myOutput = new FileOutputStream(sdDir.toString()+"/facesdk/"+ strOutFileName);
+        java.io.OutputStream myOutput = new FileOutputStream(sdDir.toString() + "/facesdk/" + strOutFileName);
         myInput = this.getAssets().open(strOutFileName);
         byte[] buffer = new byte[1024];
         int length = myInput.read(buffer);
@@ -316,9 +318,21 @@ public class MainActivity extends Activity {
         int read_permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE);
         int camera_permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.CAMERA);
 
-        if (write_permission != PackageManager.PERMISSION_GRANTED ||
-                read_permission != PackageManager.PERMISSION_GRANTED ||
-                camera_permission != PackageManager.PERMISSION_GRANTED) {
+//        if (read_permission != PackageManager.PERMISSION_GRANTED ||
+//                write_permission != PackageManager.PERMISSION_GRANTED ||
+//                camera_permission != PackageManager.PERMISSION_GRANTED) {
+//            // We don't have permission so prompt the user
+//            ActivityCompat.requestPermissions(
+//                    activity,
+//                    PERMISSIONS_REQ,
+//                    REQUEST_CODE_PERMISSION
+//            );
+//            return false;
+//        } else {
+//            return true;
+//        }
+
+        if (read_permission != PackageManager.PERMISSION_GRANTED) {
             // We don't have permission so prompt the user
             ActivityCompat.requestPermissions(
                     activity,
@@ -330,5 +344,4 @@ public class MainActivity extends Activity {
             return true;
         }
     }
-
 }
