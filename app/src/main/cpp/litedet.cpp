@@ -24,7 +24,7 @@ LiteDet::~LiteDet()
     liteDet_interpreter->releaseSession(liteDet_session);
 }
 
-std::vector<BoxInfo> LiteDet::detection(unsigned char *image_data, int width, int height, int channel)
+std::vector<float> LiteDet::detection(unsigned char *image_data, int width, int height, int channel)
 {
     MNN::CV::Matrix transform;
     std::vector<int>dims = { 1, CHANNELS, HEIGHT, WIDTH };
@@ -48,7 +48,7 @@ std::vector<BoxInfo> LiteDet::detection(unsigned char *image_data, int width, in
     results_middle.resize(NUM_CLASSES);
 
     // get last result
-    std::vector<BoxInfo> results;
+    std::vector<float> results;
 
     for (const auto &head_info : heads_info)
     {
@@ -70,7 +70,12 @@ std::vector<BoxInfo> LiteDet::detection(unsigned char *image_data, int width, in
             box.y1 = box.y1 / HEIGHT * height;
             box.x2 = box.x2 / WIDTH * width;
             box.y2 = box.y2 / HEIGHT * height;
-            results.push_back(box);
+            results.push_back(box.x1);
+            results.push_back(box.y1);
+            results.push_back(box.x2);
+            results.push_back(box.y2);
+            results.push_back(box.score);
+            results.push_back((float)box.label);
         }
     }
     return results;

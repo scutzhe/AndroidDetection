@@ -38,7 +38,7 @@ class LiteDet {
 public:
     LiteDet(const std::string &mnn_path);
     ~LiteDet();
-    std::vector<BoxInfo> detection(unsigned char *image_data, int width, int height, int channel);
+     std::vector<float> detection(unsigned char *image_data, int width, int height, int channel);
 
 private:
     void decode_infer(MNN::Tensor *cls_pred, MNN::Tensor *dis_pred, int stride, float threshold, std::vector<std::vector<BoxInfo>> &results);

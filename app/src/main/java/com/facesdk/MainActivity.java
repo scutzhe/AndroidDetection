@@ -110,7 +110,7 @@ public class MainActivity extends Activity {
                 byte[] imageData = getPixelsRGBA(yourSelectedImage);
 
                 //face_detection
-                SelfDefine faceInfo[] = faceSDKNative.FaceDetection(imageData, width,height,4);
+                float faceInfo[] = faceSDKNative.FaceDetection(imageData, width,height,4);
                 Bitmap drawBitmap = yourSelectedImage.copy(Bitmap.Config.ARGB_8888, true);
 
                 //canvas
@@ -123,15 +123,15 @@ public class MainActivity extends Activity {
                 //get face‘s Results
                 Log.i(TAG,"face_num:"+((int)faceInfo.length));
                 if(faceInfo.length>=1){
-                    for(int i=0;i<faceInfo.length;i++) {
-                        float x_min = faceInfo[i].x_min;
-                        float y_min = faceInfo[i].y_min;
-                        float x_max = faceInfo[i].x_max;
-                        float y_max = faceInfo[i].y_max;
-                        float score = faceInfo[i].score;
-                        int label = faceInfo[i].label;
-                        Log.i(TAG, "x_min,y_min,x_max,y_max,score:"
-                                + x_min + "," + y_min + "," + x_max + "," + y_max + "," + score);
+                    for(int i=0;i<faceInfo.length/6;i++) {
+                        float x_min = faceInfo[i];
+                        float y_min = faceInfo[i+1];
+                        float x_max = faceInfo[i+2];
+                        float y_max = faceInfo[i+3];
+                        float score = faceInfo[i+4];
+                        int label = (int)faceInfo[i+5];
+                        Log.i(TAG, "x_min,y_min,x_max,y_max,score,label:"
+                                + x_min + "," + y_min + "," + x_max + "," + y_max + "," + score+","+label);
                         canvas.drawRect(x_min, y_min, x_max, y_max, paint);
                     }
                 }
