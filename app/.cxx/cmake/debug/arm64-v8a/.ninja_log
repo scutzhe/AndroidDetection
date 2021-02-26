@@ -34,3 +34,9 @@
 0	593	1614305169	CMakeFiles/face_detection.dir/src/main/cpp/litedet.cpp.o	7f1549b793623d42
 593	629	1614305169	../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libface_detection.so	12c3de81cf03d032
 0	1	0	clean	3305464fe52076a7
+0	2	0	clean	3305464fe52076a7
+1	383	1614319444	CMakeFiles/face_detection.dir/src/main/cpp/jni.cpp.o	a63cc9700abf892c
+1	597	1614319444	CMakeFiles/face_detection.dir/src/main/cpp/litedet.cpp.o	7f1549b793623d42
+598	626	1614319444	../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libface_detection.so	12c3de81cf03d032
+0	3	0	clean	3305464fe52076a7
+0	2	0	clean	3305464fe52076a7

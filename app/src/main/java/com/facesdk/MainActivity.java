@@ -24,6 +24,7 @@ import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -87,6 +88,53 @@ public class MainActivity extends Activity {
         String sdPath = sdDir.toString() + "/facesdk/";
         faceSDKNative.FaceDetectionModelInit(sdPath);
 
+        /**
+        String imageDir = sdDir.toString() + "/face_hand/";
+        File file = new File(imageDir);
+        File[] names = file.listFiles();
+        String imagePath = "";
+        for(File name :names){
+            imagePath = "" + name;
+            try{
+                FileInputStream input = new FileInputStream(imagePath);
+                Bitmap bitmap = BitmapFactory.decodeStream(input);
+                int width = bitmap.getWidth();
+                int height = bitmap.getHeight();
+                byte[] imageData = getPixelsRGBA(bitmap);
+                float faceInfo[] = faceSDKNative.FaceDetection(imageData, width,height,4);
+                Bitmap drawBitmap = yourSelectedImage.copy(Bitmap.Config.ARGB_8888, true);
+
+                //canvas
+                Canvas canvas = new Canvas(drawBitmap);
+                Paint paint = new Paint();
+                paint.setColor(Color.RED);
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(1);
+
+                //get face_hand‘s Results
+                Log.i(TAG,"face_num:"+(faceInfo.length/6));
+                if(faceInfo.length>=1){
+                    for(int i=0;i<faceInfo.length/6;i++) {
+                        float x_min = faceInfo[i*6];
+                        float y_min = faceInfo[i*6+1];
+                        float x_max = faceInfo[i*6+2];
+                        float y_max = faceInfo[i*6+3];
+                        float score = faceInfo[i*6+4];
+                        float label = faceInfo[i*6+5];
+                        Log.i(TAG, "x_min,y_min,x_max,y_max,score,label:"
+                                + x_min + "," + y_min + "," + x_max + "," + y_max + "," + score+","+label);
+                        canvas.drawRect(x_min, y_min, x_max, y_max, paint);
+                    }
+                }
+                else {
+                    Log.i(TAG,"no face or hand！！！");
+                }
+                imageView.setImageBitmap(drawBitmap);
+            }catch (FileNotFoundException e){
+                e.printStackTrace();
+            }
+        }
+        */
         infoResult = (TextView) findViewById(R.id.infoResult);
         imageView = (ImageView) findViewById(R.id.imageView);
 
@@ -115,13 +163,18 @@ public class MainActivity extends Activity {
 
                 //canvas
                 Canvas canvas = new Canvas(drawBitmap);
-                Paint paint = new Paint();
-                paint.setColor(Color.RED);
-                paint.setStyle(Paint.Style.STROKE);
-                paint.setStrokeWidth(1);
+                Paint paint0 = new Paint();
+                paint0.setColor(Color.RED);
+                paint0.setStyle(Paint.Style.STROKE);
+                paint0.setStrokeWidth(1);
+
+                Paint paint1 = new Paint();
+                paint1.setColor(Color.BLUE);
+                paint1.setStyle(Paint.Style.STROKE);
+                paint1.setStrokeWidth(1);
 
                 //get face‘s Results
-                Log.i(TAG,"face_num:"+(faceInfo.length/6));
+                Log.i(TAG,"face_hand_num:"+(faceInfo.length/6));
                 if(faceInfo.length>=1){
                     for(int i=0;i<faceInfo.length/6;i++) {
                         float x_min = faceInfo[i*6];
@@ -130,9 +183,20 @@ public class MainActivity extends Activity {
                         float y_max = faceInfo[i*6+3];
                         float score = faceInfo[i*6+4];
                         float label = faceInfo[i*6+5];
+                        String flag = Float.toString(label);
+                        /**
+                         * flag=0.0,1.0
+                         * 0.0->face
+                         * 1.0->hand
+                         */
                         Log.i(TAG, "x_min,y_min,x_max,y_max,score,label:"
                                 + x_min + "," + y_min + "," + x_max + "," + y_max + "," + score+","+label);
-                        canvas.drawRect(x_min, y_min, x_max, y_max, paint);
+                        if(flag.equals("0.0")){
+                            canvas.drawRect(x_min, y_min, x_max, y_max, paint0);
+                        }
+                        else{
+                            canvas.drawRect(x_min, y_min, x_max, y_max, paint1);
+                        }
                     }
                 }
                 else {
@@ -147,18 +211,13 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         if (resultCode == RESULT_OK && null != data) {
             Uri selectedImage = data.getData();
-
             try {
                 if (requestCode == SELECT_IMAGE) {
                     Bitmap bitmap = decodeUri(selectedImage);
-
                     Bitmap rgba = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-
                     yourSelectedImage = rgba;
-
                     imageView.setImageBitmap(yourSelectedImage);
                 }
             } catch (FileNotFoundException e) {
