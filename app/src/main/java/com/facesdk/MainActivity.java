@@ -121,7 +121,7 @@ public class MainActivity extends Activity {
                 paint.setStrokeWidth(1);
 
                 //get face‘s Results
-                Log.i(TAG,"face_num:"+((int)faceInfo.length));
+                Log.i(TAG,"face_num:"+(faceInfo.length/6));
                 if(faceInfo.length>=1){
                     for(int i=0;i<faceInfo.length/6;i++) {
                         float x_min = faceInfo[i*6];
