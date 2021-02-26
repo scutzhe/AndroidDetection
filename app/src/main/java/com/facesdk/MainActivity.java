@@ -124,21 +124,21 @@ public class MainActivity extends Activity {
                 Log.i(TAG,"face_num:"+((int)faceInfo.length));
                 if(faceInfo.length>=1){
                     for(int i=0;i<faceInfo.length/6;i++) {
-                        float x_min = faceInfo[i];
-                        float y_min = faceInfo[i+1];
-                        float x_max = faceInfo[i+2];
-                        float y_max = faceInfo[i+3];
-                        float score = faceInfo[i+4];
-                        int label = (int)faceInfo[i+5];
+                        float x_min = faceInfo[i*6];
+                        float y_min = faceInfo[i*6+1];
+                        float x_max = faceInfo[i*6+2];
+                        float y_max = faceInfo[i*6+3];
+                        float score = faceInfo[i*6+4];
+                        float label = faceInfo[i*6+5];
                         Log.i(TAG, "x_min,y_min,x_max,y_max,score,label:"
                                 + x_min + "," + y_min + "," + x_max + "," + y_max + "," + score+","+label);
                         canvas.drawRect(x_min, y_min, x_max, y_max, paint);
                     }
                 }
                 else {
-                    Log.i(TAG,"no face");
+                    Log.i(TAG,"no face or hand！！！");
                 }
-
+                imageView.setImageBitmap(drawBitmap);
             }
         });
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();

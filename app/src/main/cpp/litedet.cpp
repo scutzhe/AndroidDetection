@@ -173,21 +173,14 @@ void LiteDet::nms(std::vector<BoxInfo> &input_boxes, float NMS_THRESH)
     }
 }
 
-
 inline float fast_exp(float x)
 {
-    union
-    {
+    union{
         uint32_t i;
         float f;
     } v{};
     v.i = (1 << 23) * (1.4426950409 * x + 126.93490512f);
     return v.f;
-}
-
-float sigmoid(float x)
-{
-    return 1.0f / (1.0f + fast_exp(-x));
 }
 
 template <typename _Tp>
@@ -206,6 +199,5 @@ int activation_function_softmax(const _Tp *src, _Tp *dst, int length)
     {
         dst[i] /= denominator;
     }
-
     return 0;
 }

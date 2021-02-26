@@ -5,7 +5,6 @@
 #include <vector>
 #include "litedet.hpp"
 
-
 #define TAG "FaceSDKNative"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 
@@ -69,7 +68,7 @@ Java_com_facesdk_FaceSDKNative_FaceDetection(JNIEnv *env, jobject instance, jbyt
         return nullptr;
     }
 
-    //detect face
+    //start face detection
     LOGD("imageWidth=%d, imageHeight=%d,imageChannel=%d",imageWidth,imageHeight,imageChannel);
     std::vector<float>result = lite_detection ->detection((unsigned char*)imageDate, imageWidth, imageHeight, imageChannel);
     int out_size = result.size() ;
@@ -80,9 +79,11 @@ Java_com_facesdk_FaceSDKNative_FaceDetection(JNIEnv *env, jobject instance, jbyt
     jfloatArray FaceInfo = env->NewFloatArray(out_size);
     env->SetFloatArrayRegion(FaceInfo, 0, out_size, jni_result);
     env->ReleaseByteArrayElements(imageDate_, imageDate, 0);
+    delete[] jni_result;
     return FaceInfo;
 }
 
+/*这种写法比较容易出现错误,这种写法我改了好几次都失败*/
 // 返回数组, 其类型是结构体
 //extern "C" JNIEXPORT jobjectArray JNICALL
 //Java_com_facesdk_FaceSDKNative_FaceDetection(JNIEnv *env, jobject instance, jbyteArray imageDate_,

@@ -56,7 +56,7 @@ private:
     const int HEIGHT = 128;
     const int CHANNELS = 3;
     const int THREADS = 4;
-    const float SCORE_THRESHOLD = 0.3;
+    const float SCORE_THRESHOLD = 0.35;
     const float NMS_THRESHOLD = 0.3;
     const float MEAN[3] = { 103.53f, 116.28f, 123.675f };
     const float NORMALIZATION[3] = { 0.017429f, 0.017507f, 0.017125f };
