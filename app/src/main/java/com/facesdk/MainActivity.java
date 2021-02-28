@@ -78,8 +78,7 @@ public class MainActivity extends Activity {
         //copy model
         try {
 //            copyBigDataToSD("face.mnn");
-//            copyBigDataToSD("face.mnn");
-            copyBigDataToSD("face_quant.mnn");
+            copyBigDataToSD("face.mnn");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -89,6 +88,7 @@ public class MainActivity extends Activity {
 //        Log.i(TAG, "sdPath:"+sdPath);
         faceSDKNative.FaceDetectionModelInit(sdPath);
 
+        /**
         // do one test
         String tmpImagePath = "/storage/emulated/0/face/0000.jpg";
         try{
@@ -135,61 +135,61 @@ public class MainActivity extends Activity {
         }
         Log.i(TAG,"test times:"+index);
         Log.i(TAG,"timeCost:"+totalTime/index);
+         */
 
-//        infoResult = (TextView) findViewById(R.id.infoResult);
-//        imageView = (ImageView) findViewById(R.id.imageView);
-//        Button buttonImage = (Button) findViewById(R.id.buttonImage);
-//        buttonImage.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View arg0) {
-//                Intent i = new Intent(Intent.ACTION_PICK);
-//                i.setType("image/*");
-//                startActivityForResult(i, SELECT_IMAGE);
-//            }
-//        });
-//        Button buttonDetect = (Button) findViewById(R.id.buttonDetect);
-//        buttonDetect.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View arg0) {
-//                if (yourSelectedImage == null)
-//                    return;
-//                int width = yourSelectedImage.getWidth();
-//                int height = yourSelectedImage.getHeight();
-//                Log.i(TAG,"width,height:"+width+","+height);
-//                byte[] imageDate = getPixelsRGBA(yourSelectedImage);
-//
-//                long timeDetectFace = System.currentTimeMillis();
-//                //do FaceDetection
-//                Log.i(TAG, " start detection ...");
-//                float faceInfo[] =  faceSDKNative.FaceDetection(imageDate, width, height,4);
-//                timeDetectFace = System.currentTimeMillis() - timeDetectFace;
-//
-//                //Get Results
-//               infoResult.setText("time cost："+timeDetectFace+"ms");
-//               Log.i(TAG, "time cost："+timeDetectFace);
-//               Bitmap drawBitmap = yourSelectedImage.copy(Bitmap.Config.ARGB_8888, true);
-//               //canvas
-//                Canvas canvas = new Canvas(drawBitmap);
-//                Paint paint = new Paint();
-//                paint.setColor(Color.RED);
-//                paint.setStyle(Paint.Style.STROKE);
-//                paint.setStrokeWidth(1);
-//
-//               if(faceInfo[0]>=1){
-//                   for(int i=0;i<(int)faceInfo[0]/5;i++){
-//                       float score = faceInfo[5*i+5];
-//                       if(score > 0.3) {
-//                           float x_min = faceInfo[5 * i + 1];
-//                           float y_min = faceInfo[5 * i + 2];
-//                           float x_max = faceInfo[5 * i + 3];
-//                           float y_max = faceInfo[5 * i + 4];
-//                           canvas.drawRect(x_min,y_min,x_max,y_max,paint);
-//                       }
-//                   }
-//               }
-//                imageView.setImageBitmap(drawBitmap);
-//            }
-//        });
+        infoResult = (TextView) findViewById(R.id.infoResult);
+        imageView = (ImageView) findViewById(R.id.imageView);
+        Button buttonImage = (Button) findViewById(R.id.buttonImage);
+        buttonImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View arg0) {
+                Intent i = new Intent(Intent.ACTION_PICK);
+                i.setType("image/*");
+                startActivityForResult(i, SELECT_IMAGE);
+            }
+        });
+        Button buttonDetect = (Button) findViewById(R.id.buttonDetect);
+        buttonDetect.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View arg0) {
+                if (yourSelectedImage == null)
+                    return;
+                int width = yourSelectedImage.getWidth();
+                int height = yourSelectedImage.getHeight();
+                Log.i(TAG,"width,height:"+width+","+height);
+                byte[] imageData = getPixelsRGBA(yourSelectedImage);
+
+                long timeDetectFace = System.currentTimeMillis();
+                //do FaceDetection
+                Log.i(TAG, " start detection ...");
+                float faceInfo[] =  faceSDKNative.FaceDetection(imageData, width, height,4);
+                timeDetectFace = System.currentTimeMillis() - timeDetectFace;
+
+                //Get Results
+               infoResult.setText("time cost："+timeDetectFace+"ms");
+               Log.i(TAG, "time cost："+timeDetectFace);
+               Bitmap drawBitmap = yourSelectedImage.copy(Bitmap.Config.ARGB_8888, true);
+               //canvas
+                Canvas canvas = new Canvas(drawBitmap);
+                Paint paint = new Paint();
+                paint.setColor(Color.RED);
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(1);
+
+               if(faceInfo[0]>=1){
+                   for(int i=0;i<(int)faceInfo[0]/5;i++){
+                       float score = faceInfo[5*i+5];
+                       float x_min = faceInfo[5 * i + 1];
+                       float y_min = faceInfo[5 * i + 2];
+                       float x_max = faceInfo[5 * i + 3];
+                       float y_max = faceInfo[5 * i + 4];
+                       canvas.drawRect(x_min,y_min,x_max,y_max,paint);
+                       Log.i(TAG,"score,x_min,y_min,x_max,y_max:"+score+x_min+y_min+x_max+y_max);
+                   }
+               }
+                imageView.setImageBitmap(drawBitmap);
+            }
+        });
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();

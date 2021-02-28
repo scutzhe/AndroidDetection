@@ -31,8 +31,8 @@ Java_com_facesdk_FaceSDKNative_FaceDetectionModelInit(JNIEnv *env, jobject insta
     }
     string tFaceModelDir = faceDetectionModelPath;
     string tLastChar = tFaceModelDir.substr(tFaceModelDir.length()-1, 1);
-//    string model_path = tFaceModelDir + "face.mnn";
-    string model_path = tFaceModelDir + "face_quant.mnn";
+    string model_path = tFaceModelDir + "face.mnn";
+//    string model_path = tFaceModelDir + "face_quant.mnn";
     face_detection = new  Face(model_path);
     env->ReleaseStringUTFChars(faceDetectionModelPath_, faceDetectionModelPath);
     detection_sdk_init_ok = true;
