@@ -35,8 +35,9 @@ Java_com_facesdk_FaceSDKNative_FaceDetectionModelInit(JNIEnv *env, jobject insta
 
     string tFaceModelDir = faceDetectionModelPath;
     string tLastChar = tFaceModelDir.substr(tFaceModelDir.length() - 1, 1);
-    string model_path = tFaceModelDir + "face_lite.mnn";
-    lite_detection = new LiteDet(model_path);
+    string face_model_path = tFaceModelDir + "face_lite.mnn";
+    string face_keyPoint_path = tFaceModelDir + "face_key_vulkan.mnn";
+    lite_detection = new LiteDet(face_model_path,face_keyPoint_path);
     env->ReleaseStringUTFChars(faceDetectionModelPath_, faceDetectionModelPath);
     detection_sdk_init_ok = true;
     tRet = true;
@@ -44,13 +45,13 @@ Java_com_facesdk_FaceSDKNative_FaceDetectionModelInit(JNIEnv *env, jobject insta
 }
 
 extern "C" JNIEXPORT jfloatArray JNICALL
-Java_com_facesdk_FaceSDKNative_FaceDetection(JNIEnv *env, jobject instance, jbyteArray imageDate_,
+Java_com_facesdk_FaceSDKNative_FaceDetection(JNIEnv *env, jobject instance, jbyteArray imageData_,
                                             jint imageWidth, jint imageHeight, jint imageChannel) {
     if(!detection_sdk_init_ok){
         LOGD("sdk not init");
         return nullptr;
     }
-    int tImageDateLen = env->GetArrayLength(imageDate_);
+    int tImageDateLen = env->GetArrayLength(imageData_);
     if(imageChannel == tImageDateLen / imageWidth / imageHeight){
         LOGD("imgW=%d, imgH=%d,imgC=%d",imageWidth,imageHeight,imageChannel);
     }
@@ -58,7 +59,7 @@ Java_com_facesdk_FaceSDKNative_FaceDetection(JNIEnv *env, jobject instance, jbyt
         LOGD("img data format error");
         return nullptr;
     }
-    jbyte *imageDate = env->GetByteArrayElements(imageDate_, nullptr);
+    jbyte *imageDate = env->GetByteArrayElements(imageData_, nullptr);
     if (nullptr == imageDate){
         LOGD("img data is nullptr");
         return nullptr;
@@ -70,7 +71,7 @@ Java_com_facesdk_FaceSDKNative_FaceDetection(JNIEnv *env, jobject instance, jbyt
 
     //start face detection
     LOGD("imageWidth=%d, imageHeight=%d,imageChannel=%d",imageWidth,imageHeight,imageChannel);
-    std::vector<float>result = lite_detection ->detection((unsigned char*)imageDate, imageWidth, imageHeight, imageChannel);
+    std::vector<float>result = lite_detection ->face_detection((unsigned char*)imageDate, imageWidth, imageHeight, imageChannel);
     int out_size = result.size() ;
     float* jni_result = new float[out_size];
     if(!result.empty()){
@@ -78,12 +79,52 @@ Java_com_facesdk_FaceSDKNative_FaceDetection(JNIEnv *env, jobject instance, jbyt
     }
     jfloatArray FaceInfo = env->NewFloatArray(out_size);
     env->SetFloatArrayRegion(FaceInfo, 0, out_size, jni_result);
-    env->ReleaseByteArrayElements(imageDate_, imageDate, 0);
+    env->ReleaseByteArrayElements(imageData_, imageDate, 0);
     delete[] jni_result;
     return FaceInfo;
 }
 
-/*这种写法比较容易出现错误,这种写法我改了好几次都失败*/
+extern "C" JNIEXPORT jfloatArray JNICALL
+Java_com_facesdk_FaceSDKNative_KeyDetection(JNIEnv *env, jobject instance, jbyteArray imageData_,
+                                            jint imageWidth, jint imageHeight, jint imageChannel) {
+    if(!detection_sdk_init_ok){
+        LOGD("sdk not init");
+        return nullptr;
+    }
+    int tImageDateLen = env->GetArrayLength(imageData_);
+    if(imageChannel == tImageDateLen / imageWidth / imageHeight){
+        LOGD("imgW=%d, imgH=%d,imgC=%d",imageWidth,imageHeight,imageChannel);
+    }
+    else{
+        LOGD("img data format error");
+        return nullptr;
+    }
+    jbyte *imageDate = env->GetByteArrayElements(imageData_, nullptr);
+    if (nullptr == imageDate){
+        LOGD("img data is nullptr");
+        return nullptr;
+    }
+    if(imageWidth<24||imageHeight<24){
+        LOGD("img is too small");
+        return nullptr;
+    }
+
+    //detect face keyPoint
+    LOGD("imageWidth=%d, imageHeight=%d,imageChannel=%d",imageWidth,imageHeight,imageChannel);
+    std::vector<float>result = lite_detection ->key_detection((unsigned char*)imageDate, imageWidth, imageHeight, imageChannel);
+    int out_size = result.size();
+    float* jni_result = new float[out_size];
+    if(!result.empty()){
+        memcpy(jni_result,&result[0],result.size()*sizeof(float));
+    }
+    jfloatArray tFaceInfo = env->NewFloatArray(out_size);
+    env->SetFloatArrayRegion(tFaceInfo, 0, out_size, jni_result);
+    env->ReleaseByteArrayElements(imageData_, imageDate, 0);
+    delete[] jni_result;
+    return tFaceInfo;
+}
+
+/*这种写法比较容易出现错误*/
 // 返回数组, 其类型是结构体
 //extern "C" JNIEXPORT jobjectArray JNICALL
 //Java_com_facesdk_FaceSDKNative_FaceDetection(JNIEnv *env, jobject instance, jbyteArray imageDate_,

@@ -1,2 +1,10 @@
 ninja: Entering directory `/home/zhex/git_me/AndroidDetection/app/.cxx/cmake/debug/arm64-v8a'
-ninja: no work to do.
+[1/2] Building CXX object CMakeFiles/face_detection.dir/src/main/cpp/jni.cpp.o
+../../../../src/main/cpp/jni.cpp:9:9: warning: 'LOGD' macro redefined [-Wmacro-redefined]
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
+        ^
+../../../../src/main/cpp/litedet.hpp:16:9: note: previous definition is here
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, FACE_TAG, __VA_ARGS__)
+        ^
+1 warning generated.
+[2/2] Linking CXX shared library ../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libface_detection.so

@@ -80,6 +80,7 @@ public class MainActivity extends Activity {
         //copy model
         try {
             copyBigDataToSD("face_lite.mnn");
+            copyBigDataToSD("face_key_vulkan.mnn");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -191,9 +192,26 @@ public class MainActivity extends Activity {
                          */
                         Log.i(TAG, "x_min,y_min,x_max,y_max,score,label:"
                                 + x_min + "," + y_min + "," + x_max + "," + y_max + "," + score+","+label);
+                        //检测到人脸
                         if(flag.equals("0.0")){
                             canvas.drawRect(x_min, y_min, x_max, y_max, paint0);
+                            int w = (int)(x_max - x_min);
+                            int h = (int)(y_max - y_min);
+                            Bitmap cropBitmap = Bitmap.createBitmap(drawBitmap,(int)x_min,(int)y_min,w,h);
+                            byte[] cropImageData = getPixelsRGBA(cropBitmap);
+                            float faceKeyPoint[] = faceSDKNative.KeyDetection(cropImageData,
+                                    cropBitmap.getWidth(), cropBitmap.getHeight(),4);
+                            for (int j=0; j<98; j++) {
+                                float x = faceKeyPoint[j*2] * cropBitmap.getWidth() + x_min;
+                                float y = faceKeyPoint[j*2 + 1] * cropBitmap.getHeight()+ y_min;
+//                                Log.i(TAG,"x,y:"+x+","+y);
+                                canvas.drawCircle(x,y,0.5f,paint0);
+                            }
+                            Log.i(TAG,"yaw,pitch,roll:"+faceKeyPoint[196] * 180 /Math.PI +","
+                                    +faceKeyPoint[197] * 180 / Math.PI+","
+                                    +faceKeyPoint[198]* 180 / Math.PI);
                         }
+                        //检测到人手
                         else{
                             canvas.drawRect(x_min, y_min, x_max, y_max, paint1);
                         }

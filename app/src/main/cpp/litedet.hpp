@@ -36,11 +36,15 @@ typedef struct BoxInfo_
 
 class LiteDet {
 public:
-    LiteDet(const std::string &mnn_path);
+    // 人脸检测
+    LiteDet(const std::string &face_model_path,const std::string &face_keyPoint_path);
     ~LiteDet();
-     std::vector<float> detection(unsigned char *image_data, int width, int height, int channel);
+     std::vector<float> face_detection(unsigned char *image_data, int width, int height, int channel);
+     // 人脸关键点检测
+     std::vector<float> key_detection(unsigned char *image_data, int width, int height, int channel);
 
 private:
+    // 人脸检测
     void decode_infer(MNN::Tensor *cls_pred, MNN::Tensor *dis_pred, int stride, float threshold, std::vector<std::vector<BoxInfo>> &results);
     BoxInfo disPred2Bbox(const float *&dfl_det, int label, float score, int x, int y, int stride);
     void nms(std::vector<BoxInfo> &input_boxes, float NMS_THRESH);
@@ -69,6 +73,20 @@ private:
             {"1067", "1070", 32},
     };
     std::vector<std::string>labels{"face", "hand"};
+
+    //人脸关键点检测
+    std::shared_ptr<MNN::Interpreter>key_interpreter = nullptr;
+    MNN::Session *key_session = nullptr;
+    MNN::CV::ImageProcess::Config key_image_config;
+    MNN::ScheduleConfig key_config;
+    MNN::BackendConfig key_backendConfig;
+
+    int KEY_WIDTH = 96;
+    int KEY_HEIGHT = 96;
+    int KEY_CHANNELS = 3;
+    int KEY_THREADS = 4;
+    const float KEY_MEAN[3] = {0.0f,0.0f,0.0f};
+    const float KEY_NORMALIZATION[3] = {0.003921569f,0.003921569f,0.003921569f};
 };
 
 template <typename _Tp>

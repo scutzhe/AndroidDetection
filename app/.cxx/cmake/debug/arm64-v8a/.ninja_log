@@ -40,3 +40,11 @@
 598	626	1614319444	../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libface_detection.so	12c3de81cf03d032
 0	3	0	clean	3305464fe52076a7
 0	2	0	clean	3305464fe52076a7
+0	11	1614503875	build.ninja	b87a7ab0f7ab41e2
+1	388	1614503875	CMakeFiles/face_detection.dir/src/main/cpp/jni.cpp.o	a63cc9700abf892c
+1	606	1614503875	CMakeFiles/face_detection.dir/src/main/cpp/litedet.cpp.o	7f1549b793623d42
+606	634	1614503876	../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libface_detection.so	12c3de81cf03d032
+0	368	1614504154	CMakeFiles/face_detection.dir/src/main/cpp/jni.cpp.o	a63cc9700abf892c
+368	400	1614504155	../../../../build/intermediates/cmake/debug/obj/arm64-v8a/libface_detection.so	12c3de81cf03d032
+0	1	0	clean	3305464fe52076a7
+0	1	0	clean	3305464fe52076a7

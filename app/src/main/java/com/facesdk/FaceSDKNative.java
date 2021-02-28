@@ -4,9 +4,11 @@ public class FaceSDKNative {
     //SDK初始化
     public native boolean FaceDetectionModelInit(String faceDetectionModelPath);
 
-    //SDK人脸人手检测接口(返回一个结构体类型的数组)
-    public native float[] FaceDetection(byte[] imageDate, int imageWidth , int imageHeight, int imageChannel);
+    //SDK人脸人手检测接口
+    public native float[] FaceDetection(byte[] imageData, int imageWidth , int imageHeight, int imageChannel);
 
+    //SDK人脸关键点检测接口
+    public native float[] KeyDetection(byte[] imageData, int imageWidth , int imageHeight, int imageChannel);
     //SDK销毁
     public native boolean FaceDetectionModelUnInit();
 

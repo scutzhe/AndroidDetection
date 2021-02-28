@@ -1,9 +1,10 @@
 #include "litedet.hpp"
 
-LiteDet::LiteDet(const std::string &mnn_path)
+LiteDet::LiteDet(const std::string &face_model_path, const std::string &face_keyPoint_path)
 {
+    // 人脸检测
     // MNN configuration
-    liteDet_interpreter = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromFile(mnn_path.c_str()));
+    liteDet_interpreter = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromFile(face_model_path.c_str()));
     config.type = static_cast<MNNForwardType>(MNN_FORWARD_CPU);
     config.numThread = THREADS;
     backendConfig.precision = (MNN::BackendConfig::PrecisionMode)0;
@@ -16,6 +17,21 @@ LiteDet::LiteDet(const std::string &mnn_path)
     image_config.destFormat = (MNN::CV::ImageFormat)2;//1->RGB,2->BGR
     ::memcpy(image_config.mean, MEAN, sizeof(MEAN));
     ::memcpy(image_config.normal, NORMALIZATION, sizeof(NORMALIZATION));
+
+    //人脸关键点检测
+    //model_configuration
+    key_interpreter = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromFile(face_keyPoint_path.c_str()));
+    key_config.type = static_cast<MNNForwardType>(MNN_FORWARD_CPU);
+    key_config.numThread = KEY_THREADS;
+    key_backendConfig.precision = (MNN::BackendConfig::PrecisionMode)0;
+    key_config.backendConfig = &key_backendConfig;
+    key_session = key_interpreter->createSession(key_config);
+
+    //image_configuration
+    key_image_config.sourceFormat = (MNN::CV::ImageFormat)0;//RGBA
+    key_image_config.destFormat = (MNN::CV::ImageFormat)2;// 1->RGB,2->BGR
+    ::memcpy(key_image_config.mean, KEY_MEAN, sizeof(KEY_MEAN));
+    ::memcpy(key_image_config.normal, KEY_NORMALIZATION, sizeof(KEY_NORMALIZATION));
 }
 
 LiteDet::~LiteDet()
@@ -24,7 +40,7 @@ LiteDet::~LiteDet()
     liteDet_interpreter->releaseSession(liteDet_session);
 }
 
-std::vector<float> LiteDet::detection(unsigned char *image_data, int width, int height, int channel)
+std::vector<float> LiteDet::face_detection(unsigned char *image_data, int width, int height, int channel)
 {
     MNN::CV::Matrix transform;
     std::vector<int>dims = { 1, CHANNELS, HEIGHT, WIDTH };
@@ -79,6 +95,38 @@ std::vector<float> LiteDet::detection(unsigned char *image_data, int width, int 
         }
     }
     return results;
+}
+
+std::vector<float> LiteDet:: key_detection(unsigned char *image_data, int width, int height, int channel) {
+    MNN::Tensor *input_tensor = key_interpreter->getSessionInput(key_session, nullptr);
+    MNN::CV::Matrix transform;
+    std::vector<int> dims = {1, KEY_CHANNELS, KEY_HEIGHT, KEY_WIDTH};
+    key_interpreter->resizeTensor(input_tensor, dims);
+    key_interpreter->resizeSession(key_session);
+    transform.postScale(1.0f / (float) KEY_WIDTH, 1.0f / (float) KEY_HEIGHT);
+    transform.postScale((float) width, (float) height);
+    std::unique_ptr<MNN::CV::ImageProcess> process(MNN::CV::ImageProcess::create(
+            key_image_config.sourceFormat, key_image_config.destFormat, key_image_config.mean,
+            3, key_image_config.normal, 3));
+    process->setMatrix(transform);
+    process->convert(image_data, width, height, width * channel, input_tensor);
+    key_interpreter->runSession(key_session);
+    std::string landmarks = "landmarks";
+    std::string angle = "angle";
+//    auto result = new float[199]{0.0f};
+    std::vector<float> result(199, 0.0f);
+    MNN::Tensor *tensor_landmarks = key_interpreter->getSessionOutput(key_session,
+                                                                      landmarks.c_str());
+    MNN::Tensor tensor_landmarks_host(tensor_landmarks, tensor_landmarks->getDimensionType());
+    tensor_landmarks->copyToHostTensor(&tensor_landmarks_host);
+    auto landmarks_data = tensor_landmarks_host.host<float>();
+    MNN::Tensor *tensor_angle = key_interpreter->getSessionOutput(key_session, angle.c_str());
+    MNN::Tensor tensor_angle_host(tensor_landmarks, tensor_angle->getDimensionType());
+    tensor_angle->copyToHostTensor(&tensor_angle_host);
+    auto angle_data = tensor_angle_host.host<float>();
+    memcpy(&result[0], landmarks_data, 196 * sizeof(landmarks_data[0]));
+    memcpy(&result[196], angle_data, 3 * sizeof(angle_data[0]));
+    return result;
 }
 
 void LiteDet::decode_infer(MNN::Tensor *cls_pred, MNN::Tensor *dis_pred, int stride, float threshold, std::vector<std::vector<BoxInfo>> &results)
